@@ -514,6 +514,83 @@
             line-height: 1;
         }
 
+        /* User Tag Search */
+        .user-search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e1e8ed;
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            margin-top: 4px;
+            display: none;
+        }
+
+        .user-search-results.active {
+            display: block;
+        }
+
+        .user-result-item {
+            padding: 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #e1e8ed;
+            transition: background-color 0.2s;
+        }
+
+        .user-result-item:hover {
+            background-color: #e8f5fd;
+        }
+
+        .user-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: #14171a;
+            font-size: 14px;
+        }
+
+        .user-username {
+            font-size: 12px;
+            color: #657786;
+            margin-top: 2px;
+        }
+
+        .selected-users {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .selected-user {
+            background: #e8f4ff;
+            color: #1da1f2;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .remove-user {
+            background: none;
+            border: none;
+            color: #1da1f2;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0;
+            line-height: 1;
+        }
+
         .upload-preview {
             margin: 12px 0;
             position: relative;
@@ -720,6 +797,49 @@
             color: #657786;
             font-size: 14px;
             margin-bottom: 16px;
+        }
+
+        .profile-info {
+            background: white;
+            padding: 16px;
+            margin: 12px;
+            border-radius: 12px;
+            border: 1px solid #e1e8ed;
+        }
+
+        .profile-info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .profile-info-item:last-child {
+            border-bottom: none;
+        }
+
+        .profile-info-label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .profile-info-value {
+            color: #666;
+        }
+
+        .profile-edit-btn {
+            background: #1da1f2;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        /* Profile Edit Modal */
+        .profile-edit-form {
+            padding: 16px;
         }
 
         /* Loading */
@@ -991,14 +1111,25 @@
                     </div>
                     <div class="selected-authorities" id="selectedAuthorities"></div>
                     <div class="form-help">
-                        Search for authorities by name. Select multiple authorities separated by commas.<br>
-                        Can't find an authority? Go to the Directory to add it, or tag @admin in Additional Tags below.
+                        Search for authorities by name. Select multiple authorities separated by commas.
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="userSearch">Tag Other Users</label>
+                    <div class="authority-search-container">
+                        <input type="text" id="userSearch" placeholder="Search users by username..." autocomplete="off">
+                        <div id="userSearchResults" class="user-search-results"></div>
+                    </div>
+                    <div class="selected-users" id="selectedUsers"></div>
+                    <div class="form-help">
+                        Search for users by username. They will be notified when mentioned in reports.
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="customTags">Additional Tags</label>
-                    <input type="text" id="customTags" placeholder="Search users or authorities by @username or @handle" autocomplete="off">
+                    <input type="text" id="customTags" placeholder="Type @ to search for users or authorities" autocomplete="off">
                     <div id="autocompleteDropdown" class="autocomplete-dropdown"></div>
                     <div class="form-help">
                         Type @ to search for users and authorities. Tag @admin to request new authority verification.
@@ -1037,10 +1168,35 @@
                 <div class="profile-avatar" id="profileAvatar">U</div>
                 <div class="profile-name" id="profileName">User</div>
                 <div class="profile-stats" id="profileStats">0 reports submitted</div>
+                <button class="btn btn-secondary" onclick="showEditProfileModal()" style="width: auto; padding: 8px 24px; margin-bottom: 12px;">
+                    Edit Profile
+                </button>
                 <button class="btn btn-secondary" onclick="logout()" style="width: auto; padding: 8px 24px;">
                     Logout
                 </button>
             </div>
+            
+            <!-- Profile Information -->
+            <div id="profileInfo" class="profile-info">
+                <div class="profile-info-item">
+                    <span class="profile-info-label">Phone:</span>
+                    <span class="profile-info-value" id="profilePhone">Not set</span>
+                </div>
+                <div class="profile-info-item">
+                    <span class="profile-info-label">Location:</span>
+                    <span class="profile-info-value" id="profileLocation">Not set</span>
+                </div>
+                <div class="profile-info-item">
+                    <span class="profile-info-label">Member Since:</span>
+                    <span class="profile-info-value" id="profileJoinDate">-</span>
+                </div>
+                <div class="profile-info-item">
+                    <span class="profile-info-label">Last Login:</span>
+                    <span class="profile-info-value" id="profileLastLogin">-</span>
+                </div>
+            </div>
+            
+            <!-- My Reports -->
             <div id="myReports"></div>
         </div>
     </div>
@@ -1093,1665 +1249,1929 @@
             </div>
             <div class="form-group">
                 <label for="authorityHandle">Handle *</label>
-                    <input type="text" id="authorityHandle" placeholder="e.g., @LagosPolice">
+                <input type="text" id="authorityHandle" placeholder="e.g., @LagosPolice">
+            </div>
+            <div class="form-group">
+                <label for="authorityDescription">Description</label>
+                <textarea id="authorityDescription" placeholder="Brief description of the authority"></textarea>
+            </div>
+            <button class="btn btn-primary" id="modalSubmitBtn" onclick="addNewAuthority()">Add Authority</button>
+        </div>
+    </div>
+
+    <!-- Comments Modal -->
+    <div id="commentsModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Comments</h2>
+                <button class="modal-close" onclick="hideCommentsModal()">×</button>
+            </div>
+            <div id="commentsContainer" style="max-height: 400px; overflow-y: auto; margin-bottom: 16px;">
+                <!-- Comments will be loaded here -->
+            </div>
+            <div class="comment-form">
+                <input type="text" id="commentInput" class="comment-input" placeholder="Add a comment..." maxlength="500">
+                <button id="sendCommentBtn" class="send-comment-btn" onclick="submitComment()">➤</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div id="editProfileModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Edit Profile</h2>
+                <button class="modal-close" onclick="hideEditProfileModal()">×</button>
+            </div>
+            <div class="profile-edit-form">
+                <div class="form-group">
+                    <label for="editPhone">Phone Number</label>
+                    <input type="tel" id="editPhone" placeholder="Enter your phone number">
                 </div>
                 <div class="form-group">
-                    <label for="authorityDescription">Description</label>
-                    <textarea id="authorityDescription" placeholder="Brief description of the authority"></textarea>
+                    <label for="editLocation">Location</label>
+                    <input type="text" id="editLocation" placeholder="Enter your location">
                 </div>
-                <button class="btn btn-primary" id="modalSubmitBtn" onclick="addNewAuthority()">Add Authority</button>
+                <button class="btn btn-primary" onclick="updateProfile()">Save Changes</button>
             </div>
         </div>
+    </div>
 
-        <!-- Comments Modal -->
-        <div id="commentsModal" class="modal hidden">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2 class="modal-title">Comments</h2>
-                    <button class="modal-close" onclick="hideCommentsModal()">×</button>
-                </div>
-                <div id="commentsContainer" style="max-height: 400px; overflow-y: auto; margin-bottom: 16px;">
-                    <!-- Comments will be loaded here -->
-                </div>
-                <div class="comment-form">
-                    <input type="text" id="commentInput" class="comment-input" placeholder="Add a comment..." maxlength="500">
-                    <button id="sendCommentBtn" class="send-comment-btn" onclick="submitComment()">➤</button>
-                </div>
-            </div>
-        </div>
+    <script>
+        // Configuration
+        const CONFIG = {
+            SHEET_ID: '1vNDdY-fZok4s7pvbuALFMJf-avrv1VC5aeTR9euNdh8',
+            API_URL: 'https://script.google.com/macros/s/AKfycby2ANNS_QBhnkWydMvv3wdV2AulhrKBDqQEKDAfSuBkI7OHv66WLfaEOJX7WuWv3fSt/exec',
+            OPENSHEET_BASE: 'https://opensheet.elk.sh'
+        };
 
-        <script>
-            // Configuration
-            const CONFIG = {
-                SHEET_ID: '1vNDdY-fZok4s7pvbuALFMJf-avrv1VC5aeTR9euNdh8',
-                API_URL: 'https://script.google.com/macros/s/AKfycby2ANNS_QBhnkWydMvv3wdV2AulhrKBDqQEKDAfSuBkI7OHv66WLfaEOJX7WuWv3fSt/exec',
-                OPENSHEET_BASE: 'https://opensheet.elk.sh'
-            };
+        // Application State
+        const appState = {
+            currentUser: null,
+            authToken: null,
+            isRegisterMode: false,
+            selectedAuthorities: [],
+            selectedUsers: [],
+            authorities: [],
+            users: [],
+            currentUploadedFile: null,
+            editingAuthority: null,
+            currentReportId: null,
+            feedRefreshInterval: null,
+            lastFeedUpdate: null,
+            comments: {},
+            userProfile: null
+        };
 
-            // Application State
-            const appState = {
-                currentUser: null,
-                authToken: null,
-                isRegisterMode: false,
-                selectedAuthorities: [],
-                authorities: [],
-                currentUploadedFile: null,
-                editingAuthority: null,
-                currentReportId: null,
-                feedRefreshInterval: null,
-                lastFeedUpdate: null,
-                comments: {}
-            };
+        // API Service
+        const ApiService = {
+            async request(action, data = {}) {
+                try {
+                    const payload = {
+                        action: action,
+                        data: data
+                    };
 
-            // API Service
-            const ApiService = {
-                async request(action, data = {}) {
-                    try {
-                        const payload = {
-                            action: action,
-                            data: data
-                        };
+                    if (appState.authToken) {
+                        payload.token = appState.authToken;
+                    }
 
-                        if (appState.authToken) {
-                            payload.token = appState.authToken;
+                    console.log('API Request:', action, payload);
+
+                    const response = await fetch(CONFIG.API_URL, {
+                        method: 'POST',
+                        body: JSON.stringify(payload),
+                        headers: {
+                            'Content-Type': 'text/plain;charset=utf-8'
                         }
+                    });
 
-                        console.log('API Request:', action, payload);
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
 
-                        const response = await fetch(CONFIG.API_URL, {
-                            method: 'POST',
-                            body: JSON.stringify(payload),
-                            headers: {
-                                'Content-Type': 'text/plain;charset=utf-8'
-                            }
+                    const text = await response.text();
+                    console.log('API Response text:', text);
+                    
+                    let result;
+                    try {
+                        result = JSON.parse(text);
+                    } catch (e) {
+                        console.error('Failed to parse JSON:', text);
+                        throw new Error('Invalid response from server');
+                    }
+                    
+                    console.log('API Response parsed:', result);
+                    return result;
+
+                } catch (error) {
+                    console.error('API Error:', error);
+                    return { 
+                        success: false, 
+                        error: error.message || 'Network error. Please check your connection.' 
+                    };
+                }
+            },
+
+            async getSheetData(sheetName) {
+                try {
+                    const url = `${CONFIG.OPENSHEET_BASE}/${CONFIG.SHEET_ID}/${sheetName}`;
+                    console.log('Fetching sheet data:', url);
+                    
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    console.log(`Loaded ${data.length} records from ${sheetName}`);
+                    
+                    // Filter out header rows
+                    if (sheetName === 'Reports') {
+                        return data.filter(row => row.report_id && !row.report_id.includes('authority'));
+                    }
+                    if (sheetName === 'Authorities') {
+                        return data.filter(row => row.authority_id && row.authority_id !== 'authority_id');
+                    }
+                    if (sheetName === 'Users') {
+                        return data.filter(row => row.user_id && row.user_id !== 'user_id');
+                    }
+                    if (sheetName === 'Comments') {
+                        return data.filter(row => row.comment_id && row.comment_id !== 'comment_id');
+                    }
+                    
+                    return data;
+                } catch (error) {
+                    console.error('OpenSheet Error:', error);
+                    return [];
+                }
+            },
+
+            async getCommentsForReport(reportId) {
+                try {
+                    const allComments = await this.getSheetData('Comments');
+                    return allComments.filter(comment => 
+                        comment.report_id === reportId && comment.is_hidden !== 'TRUE'
+                    );
+                } catch (error) {
+                    console.error('Failed to load comments:', error);
+                    return [];
+                }
+            },
+
+            async getUserProfile(userId) {
+                try {
+                    const result = await this.request('get_user_profile', { user_id: userId });
+                    if (result.success) {
+                        return result.profile;
+                    }
+                    return null;
+                } catch (error) {
+                    console.error('Failed to get user profile:', error);
+                    return null;
+                }
+            },
+
+            async searchUsersByUsername(username) {
+                try {
+                    const result = await this.request('get_user_by_username', { username: username });
+                    if (result.success) {
+                        return result.users;
+                    }
+                    return [];
+                } catch (error) {
+                    console.error('Failed to search users:', error);
+                    return [];
+                }
+            },
+
+            async uploadMedia(file) {
+                if (!file) return null;
+
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File size too large. Please select a file under 5MB.');
+                    return null;
+                }
+
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        resolve({
+                            url: e.target.result,
+                            name: file.name,
+                            type: file.type,
+                            size: file.size
                         });
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+        };
 
-                        if (!response.ok) {
-                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                        }
+        // Authentication Functions
+        async function handleAuth() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const fullName = document.getElementById('fullName')?.value.trim() || '';
 
-                        const text = await response.text();
-                        console.log('API Response text:', text);
-                        
-                        let result;
-                        try {
-                            result = JSON.parse(text);
-                        } catch (e) {
-                            console.error('Failed to parse JSON:', text);
-                            throw new Error('Invalid response from server');
-                        }
-                        
-                        console.log('API Response parsed:', result);
-                        return result;
-
-                    } catch (error) {
-                        console.error('API Error:', error);
-                        return { 
-                            success: false, 
-                            error: error.message || 'Network error. Please check your connection.' 
-                        };
-                    }
-                },
-
-                async getSheetData(sheetName) {
-                    try {
-                        const url = `${CONFIG.OPENSHEET_BASE}/${CONFIG.SHEET_ID}/${sheetName}`;
-                        console.log('Fetching sheet data:', url);
-                        
-                        const response = await fetch(url);
-                        if (!response.ok) {
-                            throw new Error(`HTTP ${response.status}`);
-                        }
-                        
-                        const data = await response.json();
-                        console.log(`Loaded ${data.length} records from ${sheetName}`);
-                        
-                        // Filter out header rows
-                        if (sheetName === 'Reports') {
-                            return data.filter(row => row.report_id && !row.report_id.includes('authority'));
-                        }
-                        if (sheetName === 'Authorities') {
-                            return data.filter(row => row.authority_id && row.authority_id !== 'authority_id');
-                        }
-                        if (sheetName === 'Users') {
-                            return data.filter(row => row.user_id && row.user_id !== 'user_id');
-                        }
-                        if (sheetName === 'Comments') {
-                            return data.filter(row => row.comment_id && row.comment_id !== 'comment_id');
-                        }
-                        
-                        return data;
-                    } catch (error) {
-                        console.error('OpenSheet Error:', error);
-                        return [];
-                    }
-                },
-
-                async getCommentsForReport(reportId) {
-                    try {
-                        const allComments = await this.getSheetData('Comments');
-                        return allComments.filter(comment => 
-                            comment.report_id === reportId && comment.is_hidden !== 'TRUE'
-                        );
-                    } catch (error) {
-                        console.error('Failed to load comments:', error);
-                        return [];
-                    }
-                },
-
-                async uploadMedia(file) {
-                    if (!file) return null;
-
-                    if (file.size > 5 * 1024 * 1024) {
-                        alert('File size too large. Please select a file under 5MB.');
-                        return null;
-                    }
-
-                    return new Promise((resolve) => {
-                        const reader = new FileReader();
-                        reader.onload = function(e) {
-                            resolve({
-                                url: e.target.result,
-                                name: file.name,
-                                type: file.type,
-                                size: file.size
-                            });
-                        };
-                        reader.readAsDataURL(file);
-                    });
-                }
-            };
-
-            // Authentication Functions
-            async function handleAuth() {
-                const email = document.getElementById('email').value.trim();
-                const password = document.getElementById('password').value.trim();
-                const fullName = document.getElementById('fullName')?.value.trim() || '';
-
-                if (!email || !password) {
-                    showAuthMessage('Please enter both email/username and password', 'error');
-                    return;
-                }
-
-                setLoading(true, '#authBtn');
-
-                if (appState.isRegisterMode) {
-                    // Register
-                    const result = await ApiService.request('register', {
-                        email: email,
-                        password: password,
-                        full_name: fullName || email.split('@')[0],
-                        username: email.split('@')[0].toLowerCase()
-                    });
-
-                    if (result.success) {
-                        showAuthMessage('Registration successful!', 'success');
-                        appState.currentUser = result.user;
-                        appState.authToken = result.token;
-                        
-                        localStorage.setItem('ireporter_user', JSON.stringify(result.user));
-                        localStorage.setItem('ireporter_token', result.token);
-                        
-                        setTimeout(() => {
-                            showMainApp();
-                        }, 1000);
-                    } else {
-                        showAuthMessage(result.error || 'Registration failed', 'error');
-                    }
-                } else {
-                    // Login
-                    const result = await ApiService.request('login', {
-                        username: email,
-                        password: password
-                    });
-
-                    console.log('Login result:', result);
-
-                    if (result.success) {
-                        showAuthMessage('Login successful!', 'success');
-                        appState.currentUser = result.user;
-                        appState.authToken = result.token;
-                        
-                        localStorage.setItem('ireporter_user', JSON.stringify(result.user));
-                        localStorage.setItem('ireporter_token', result.token);
-                        
-                        setTimeout(() => {
-                            showMainApp();
-                        }, 1000);
-                    } else {
-                        showAuthMessage(result.error || 'Invalid email/username or password', 'error');
-                    }
-                }
-
-                setLoading(false, '#authBtn');
+            if (!email || !password) {
+                showAuthMessage('Please enter both email/username and password', 'error');
+                return;
             }
 
-            function showAuthMessage(message, type) {
-                const messageDiv = document.getElementById('authMessage');
-                messageDiv.innerHTML = '';
-                
-                const messageEl = document.createElement('div');
-                messageEl.className = `${type}-message`;
-                messageEl.textContent = message;
-                messageDiv.appendChild(messageEl);
-                
-                setTimeout(() => {
-                    if (messageEl.parentNode) {
-                        messageEl.remove();
-                    }
-                }, 5000);
-            }
+            setLoading(true, '#authBtn');
 
-            function toggleRegisterMode() {
-                appState.isRegisterMode = !appState.isRegisterMode;
-                const authBtn = document.getElementById('authBtn');
-                const authToggle = document.getElementById('authToggle');
-                const fullNameGroup = document.getElementById('fullNameGroup');
-                const authMessage = document.getElementById('authMessage');
-
-                authMessage.innerHTML = '';
-
-                if (appState.isRegisterMode) {
-                    authBtn.textContent = 'Register';
-                    authToggle.textContent = 'Already have an account? Login';
-                    fullNameGroup.classList.remove('hidden');
-                } else {
-                    authBtn.textContent = 'Login';
-                    authToggle.textContent = "Don't have an account? Register";
-                    fullNameGroup.classList.add('hidden');
-                }
-
-                // Clear fields
-                document.getElementById('email').value = '';
-                document.getElementById('password').value = '';
-                if (fullNameGroup) {
-                    document.getElementById('fullName').value = '';
-                }
-            }
-
-            function showForgotPassword() {
-                document.getElementById('forgotPasswordModal').classList.remove('hidden');
-            }
-
-            function hideForgotPassword() {
-                document.getElementById('forgotPasswordModal').classList.add('hidden');
-                document.getElementById('resetEmail').value = '';
-            }
-
-            async function sendResetEmail() {
-                const email = document.getElementById('resetEmail').value.trim();
-                
-                if (!email) {
-                    showMessage('Please enter your email', 'error');
-                    return;
-                }
-
-                showMessage('Password reset feature coming soon', 'info');
-                hideForgotPassword();
-            }
-
-            function logout() {
-                localStorage.removeItem('ireporter_user');
-                localStorage.removeItem('ireporter_token');
-                
-                appState.currentUser = null;
-                appState.authToken = null;
-                
-                // Clear refresh interval
-                if (appState.feedRefreshInterval) {
-                    clearInterval(appState.feedRefreshInterval);
-                    appState.feedRefreshInterval = null;
-                }
-                
-                showAuthScreen();
-                showMessage('Logged out successfully', 'info');
-            }
-
-            // Screen Management
-            function showAuthScreen() {
-                document.getElementById('authScreen').classList.remove('hidden');
-                document.getElementById('homeFeed').classList.add('hidden');
-                document.getElementById('reportForm').classList.add('hidden');
-                document.getElementById('directory').classList.add('hidden');
-                document.getElementById('profile').classList.add('hidden');
-                document.querySelector('.bottom-nav').style.display = 'none';
-                document.querySelector('.header').style.display = 'none';
-                
-                appState.isRegisterMode = false;
-                const authBtn = document.getElementById('authBtn');
-                const authToggle = document.getElementById('authToggle');
-                const fullNameGroup = document.getElementById('fullNameGroup');
-                
-                authBtn.textContent = 'Login';
-                authToggle.textContent = "Don't have an account? Register";
-                if (fullNameGroup) {
-                    fullNameGroup.classList.add('hidden');
-                }
-                
-                document.getElementById('authMessage').innerHTML = '';
-            }
-
-            function showMainApp() {
-                document.getElementById('authScreen').classList.add('hidden');
-                document.querySelector('.bottom-nav').style.display = 'flex';
-                document.querySelector('.header').style.display = 'block';
-                
-                updateUserInfo();
-                showScreen('home');
-                
-                // Load initial data
-                loadAuthorities();
-                
-                // Start feed refresh interval
-                startFeedRefresh();
-            }
-
-            function showScreen(screen) {
-                document.getElementById('homeFeed').classList.add('hidden');
-                document.getElementById('reportForm').classList.add('hidden');
-                document.getElementById('directory').classList.add('hidden');
-                document.getElementById('profile').classList.add('hidden');
-
-                document.querySelectorAll('.nav-item').forEach(item => {
-                    item.classList.remove('active');
+            if (appState.isRegisterMode) {
+                // Register
+                const result = await ApiService.request('register', {
+                    email: email,
+                    password: password,
+                    full_name: fullName || email.split('@')[0],
+                    username: email.split('@')[0].toLowerCase()
                 });
 
-                switch(screen) {
-                    case 'home':
-                        document.getElementById('homeFeed').classList.remove('hidden');
-                        document.querySelectorAll('.nav-item')[0].classList.add('active');
-                        loadFeed();
-                        break;
-                    case 'report':
-                        document.getElementById('reportForm').classList.remove('hidden');
-                        document.querySelectorAll('.nav-item')[1].classList.add('active');
-                        // Load authorities if not already loaded
-                        if (appState.authorities.length === 0) {
-                            loadAuthorities();
-                        }
-                        renderSelectedAuthorities();
-                        break;
-                    case 'directory':
-                        document.getElementById('directory').classList.remove('hidden');
-                        document.querySelectorAll('.nav-item')[2].classList.add('active');
-                        loadDirectory();
-                        break;
-                    case 'profile':
-                        document.getElementById('profile').classList.remove('hidden');
-                        document.querySelectorAll('.nav-item')[3].classList.add('active');
-                        loadProfile();
-                        break;
-                }
-            }
-
-            function updateUserInfo() {
-                const userInfo = document.getElementById('userInfo');
-                if (appState.currentUser) {
-                    userInfo.textContent = `@${appState.currentUser.username || appState.currentUser.email.split('@')[0]}`;
-                }
-            }
-
-            // Feed Refresh System
-            function startFeedRefresh() {
-                // Clear existing interval
-                if (appState.feedRefreshInterval) {
-                    clearInterval(appState.feedRefreshInterval);
-                }
-                
-                // Set up 5-second refresh interval
-                appState.feedRefreshInterval = setInterval(() => {
-                    if (document.getElementById('homeFeed') && !document.getElementById('homeFeed').classList.contains('hidden')) {
-                        refreshFeed();
-                    }
-                }, 5000); // 5 seconds
-                
-                updateLastUpdatedTime();
-            }
-
-            function refreshFeed() {
-                if (!appState.currentUser) return;
-                
-                loadFeed(true); // Pass true to indicate it's a refresh
-                updateLastUpdatedTime();
-            }
-
-            function updateLastUpdatedTime() {
-                const now = new Date();
-                appState.lastFeedUpdate = now;
-                
-                const lastUpdatedEl = document.getElementById('lastUpdated');
-                if (lastUpdatedEl) {
-                    const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                    lastUpdatedEl.textContent = timeString;
-                }
-            }
-
-            // Report Form Functions
-            function updateCharCount() {
-                const description = document.getElementById('description').value;
-                const charCount = document.getElementById('charCount');
-                charCount.textContent = `${description.length} / 500`;
-                
-                if (description.length > 450) {
-                    charCount.style.color = '#f44336';
-                } else {
-                    charCount.style.color = '#657786';
-                }
-            }
-
-            function toggleCoordinateFields() {
-                const useCoordinates = document.getElementById('useCoordinates').checked;
-                const coordinateFields = document.getElementById('coordinateFields');
-                
-                if (useCoordinates) {
-                    coordinateFields.classList.add('active');
-                } else {
-                    coordinateFields.classList.remove('active');
-                    document.getElementById('latitude').value = '';
-                    document.getElementById('longitude').value = '';
-                }
-            }
-
-            function useCurrentLocation() {
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(
-                        position => {
-                            const lat = position.coords.latitude;
-                            const lng = position.coords.longitude;
-                            
-                            // Set coordinates
-                            document.getElementById('useCoordinates').checked = true;
-                            toggleCoordinateFields();
-                            document.getElementById('latitude').value = lat.toFixed(6);
-                            document.getElementById('longitude').value = lng.toFixed(6);
-                            
-                            // Try to get location name (optional)
-                            getLocationName(lat, lng);
-                            
-                            showMessage('Location captured successfully', 'success');
-                        },
-                        error => {
-                            console.error('Geolocation error:', error);
-                            showMessage('Could not detect location. Please enter manually.', 'error');
-                        }
-                    );
-                } else {
-                    showMessage('Geolocation not supported. Please enter location manually.', 'error');
-                }
-            }
-
-            async function getLocationName(lat, lng) {
-                try {
-                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
-                    const data = await response.json();
+                if (result.success) {
+                    showAuthMessage('Registration successful!', 'success');
+                    appState.currentUser = result.user;
+                    appState.authToken = result.token;
                     
-                    if (data.display_name) {
-                        document.getElementById('locationName').value = data.display_name.split(',')[0];
-                    }
-                } catch (error) {
-                    console.error('Failed to get location name:', error);
+                    localStorage.setItem('ireporter_user', JSON.stringify(result.user));
+                    localStorage.setItem('ireporter_token', result.token);
+                    
+                    setTimeout(() => {
+                        showMainApp();
+                    }, 1000);
+                } else {
+                    showAuthMessage(result.error || 'Registration failed', 'error');
+                }
+            } else {
+                // Login
+                const result = await ApiService.request('login', {
+                    username: email,
+                    password: password
+                });
+
+                console.log('Login result:', result);
+
+                if (result.success) {
+                    showAuthMessage('Login successful!', 'success');
+                    appState.currentUser = result.user;
+                    appState.authToken = result.token;
+                    
+                    localStorage.setItem('ireporter_user', JSON.stringify(result.user));
+                    localStorage.setItem('ireporter_token', result.token);
+                    
+                    setTimeout(() => {
+                        showMainApp();
+                    }, 1000);
+                } else {
+                    showAuthMessage(result.error || 'Invalid email/username or password', 'error');
                 }
             }
 
-            function clearLocation() {
-                document.getElementById('locationName').value = '';
-                document.getElementById('useCoordinates').checked = false;
-                toggleCoordinateFields();
+            setLoading(false, '#authBtn');
+        }
+
+        function showAuthMessage(message, type) {
+            const messageDiv = document.getElementById('authMessage');
+            messageDiv.innerHTML = '';
+            
+            const messageEl = document.createElement('div');
+            messageEl.className = `${type}-message`;
+            messageEl.textContent = message;
+            messageDiv.appendChild(messageEl);
+            
+            setTimeout(() => {
+                if (messageEl.parentNode) {
+                    messageEl.remove();
+                }
+            }, 5000);
+        }
+
+        function toggleRegisterMode() {
+            appState.isRegisterMode = !appState.isRegisterMode;
+            const authBtn = document.getElementById('authBtn');
+            const authToggle = document.getElementById('authToggle');
+            const fullNameGroup = document.getElementById('fullNameGroup');
+            const authMessage = document.getElementById('authMessage');
+
+            authMessage.innerHTML = '';
+
+            if (appState.isRegisterMode) {
+                authBtn.textContent = 'Register';
+                authToggle.textContent = 'Already have an account? Login';
+                fullNameGroup.classList.remove('hidden');
+            } else {
+                authBtn.textContent = 'Login';
+                authToggle.textContent = "Don't have an account? Register";
+                fullNameGroup.classList.add('hidden');
+            }
+
+            // Clear fields
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+            if (fullNameGroup) {
+                document.getElementById('fullName').value = '';
+            }
+        }
+
+        function showForgotPassword() {
+            document.getElementById('forgotPasswordModal').classList.remove('hidden');
+        }
+
+        function hideForgotPassword() {
+            document.getElementById('forgotPasswordModal').classList.add('hidden');
+            document.getElementById('resetEmail').value = '';
+        }
+
+        async function sendResetEmail() {
+            const email = document.getElementById('resetEmail').value.trim();
+            
+            if (!email) {
+                showMessage('Please enter your email', 'error');
+                return;
+            }
+
+            showMessage('Password reset feature coming soon', 'info');
+            hideForgotPassword();
+        }
+
+        function logout() {
+            localStorage.removeItem('ireporter_user');
+            localStorage.removeItem('ireporter_token');
+            
+            appState.currentUser = null;
+            appState.authToken = null;
+            
+            // Clear refresh interval
+            if (appState.feedRefreshInterval) {
+                clearInterval(appState.feedRefreshInterval);
+                appState.feedRefreshInterval = null;
+            }
+            
+            showAuthScreen();
+            showMessage('Logged out successfully', 'info');
+        }
+
+        // Screen Management
+        function showAuthScreen() {
+            document.getElementById('authScreen').classList.remove('hidden');
+            document.getElementById('homeFeed').classList.add('hidden');
+            document.getElementById('reportForm').classList.add('hidden');
+            document.getElementById('directory').classList.add('hidden');
+            document.getElementById('profile').classList.add('hidden');
+            document.querySelector('.bottom-nav').style.display = 'none';
+            document.querySelector('.header').style.display = 'none';
+            
+            appState.isRegisterMode = false;
+            const authBtn = document.getElementById('authBtn');
+            const authToggle = document.getElementById('authToggle');
+            const fullNameGroup = document.getElementById('fullNameGroup');
+            
+            authBtn.textContent = 'Login';
+            authToggle.textContent = "Don't have an account? Register";
+            if (fullNameGroup) {
+                fullNameGroup.classList.add('hidden');
+            }
+            
+            document.getElementById('authMessage').innerHTML = '';
+        }
+
+        function showMainApp() {
+            document.getElementById('authScreen').classList.add('hidden');
+            document.querySelector('.bottom-nav').style.display = 'flex';
+            document.querySelector('.header').style.display = 'block';
+            
+            updateUserInfo();
+            showScreen('home');
+            
+            // Load initial data
+            loadAuthorities();
+            loadUserProfile();
+            
+            // Start feed refresh interval
+            startFeedRefresh();
+        }
+
+        function showScreen(screen) {
+            document.getElementById('homeFeed').classList.add('hidden');
+            document.getElementById('reportForm').classList.add('hidden');
+            document.getElementById('directory').classList.add('hidden');
+            document.getElementById('profile').classList.add('hidden');
+
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            switch(screen) {
+                case 'home':
+                    document.getElementById('homeFeed').classList.remove('hidden');
+                    document.querySelectorAll('.nav-item')[0].classList.add('active');
+                    loadFeed();
+                    break;
+                case 'report':
+                    document.getElementById('reportForm').classList.remove('hidden');
+                    document.querySelectorAll('.nav-item')[1].classList.add('active');
+                    // Load authorities if not already loaded
+                    if (appState.authorities.length === 0) {
+                        loadAuthorities();
+                    }
+                    renderSelectedAuthorities();
+                    renderSelectedUsers();
+                    break;
+                case 'directory':
+                    document.getElementById('directory').classList.remove('hidden');
+                    document.querySelectorAll('.nav-item')[2].classList.add('active');
+                    loadDirectory();
+                    break;
+                case 'profile':
+                    document.getElementById('profile').classList.remove('hidden');
+                    document.querySelectorAll('.nav-item')[3].classList.add('active');
+                    loadProfile();
+                    break;
+            }
+        }
+
+        function updateUserInfo() {
+            const userInfo = document.getElementById('userInfo');
+            if (appState.currentUser) {
+                userInfo.textContent = `@${appState.currentUser.username || appState.currentUser.email.split('@')[0]}`;
+            }
+        }
+
+        // Feed Refresh System
+        function startFeedRefresh() {
+            // Clear existing interval
+            if (appState.feedRefreshInterval) {
+                clearInterval(appState.feedRefreshInterval);
+            }
+            
+            // Set up 5-second refresh interval
+            appState.feedRefreshInterval = setInterval(() => {
+                if (document.getElementById('homeFeed') && !document.getElementById('homeFeed').classList.contains('hidden')) {
+                    refreshFeed();
+                }
+            }, 5000); // 5 seconds
+            
+            updateLastUpdatedTime();
+        }
+
+        function refreshFeed() {
+            if (!appState.currentUser) return;
+            
+            loadFeed(true); // Pass true to indicate it's a refresh
+            updateLastUpdatedTime();
+        }
+
+        function updateLastUpdatedTime() {
+            const now = new Date();
+            appState.lastFeedUpdate = now;
+            
+            const lastUpdatedEl = document.getElementById('lastUpdated');
+            if (lastUpdatedEl) {
+                const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                lastUpdatedEl.textContent = timeString;
+            }
+        }
+
+        // Report Form Functions
+        function updateCharCount() {
+            const description = document.getElementById('description').value;
+            const charCount = document.getElementById('charCount');
+            charCount.textContent = `${description.length} / 500`;
+            
+            if (description.length > 450) {
+                charCount.style.color = '#f44336';
+            } else {
+                charCount.style.color = '#657786';
+            }
+        }
+
+        function toggleCoordinateFields() {
+            const useCoordinates = document.getElementById('useCoordinates').checked;
+            const coordinateFields = document.getElementById('coordinateFields');
+            
+            if (useCoordinates) {
+                coordinateFields.classList.add('active');
+            } else {
+                coordinateFields.classList.remove('active');
                 document.getElementById('latitude').value = '';
                 document.getElementById('longitude').value = '';
             }
+        }
 
-            async function loadAuthorities() {
-                try {
-                    const authorities = await ApiService.getSheetData('Authorities');
-                    appState.authorities = authorities;
-                    console.log('Authorities loaded:', authorities.length);
-                } catch (error) {
-                    console.error('Failed to load authorities:', error);
-                    appState.authorities = [];
+        function useCurrentLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        
+                        // Set coordinates
+                        document.getElementById('useCoordinates').checked = true;
+                        toggleCoordinateFields();
+                        document.getElementById('latitude').value = lat.toFixed(6);
+                        document.getElementById('longitude').value = lng.toFixed(6);
+                        
+                        // Try to get location name (optional)
+                        getLocationName(lat, lng);
+                        
+                        showMessage('Location captured successfully', 'success');
+                    },
+                    error => {
+                        console.error('Geolocation error:', error);
+                        showMessage('Could not detect location. Please enter manually.', 'error');
+                    }
+                );
+            } else {
+                showMessage('Geolocation not supported. Please enter location manually.', 'error');
+            }
+        }
+
+        async function getLocationName(lat, lng) {
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+                const data = await response.json();
+                
+                if (data.display_name) {
+                    document.getElementById('locationName').value = data.display_name.split(',')[0];
                 }
+            } catch (error) {
+                console.error('Failed to get location name:', error);
             }
+        }
 
-            // Authority Search Functionality
-            let authoritySearchTimeout;
-            const authoritySearchInput = document.getElementById('authoritySearch');
-            const authoritySearchResults = document.getElementById('authoritySearchResults');
+        function clearLocation() {
+            document.getElementById('locationName').value = '';
+            document.getElementById('useCoordinates').checked = false;
+            toggleCoordinateFields();
+            document.getElementById('latitude').value = '';
+            document.getElementById('longitude').value = '';
+        }
 
-            if (authoritySearchInput) {
-                authoritySearchInput.addEventListener('input', function(e) {
-                    clearTimeout(authoritySearchTimeout);
-                    const searchTerm = e.target.value.trim();
-                    
-                    if (searchTerm.length === 0) {
-                        hideAuthoritySearchResults();
-                        return;
-                    }
-                    
-                    authoritySearchTimeout = setTimeout(() => {
-                        searchAuthorities(searchTerm);
-                    }, 300);
-                });
-
-                authoritySearchInput.addEventListener('focus', function() {
-                    if (this.value.trim().length > 0) {
-                        searchAuthorities(this.value.trim());
-                    }
-                });
-
-                // Close search results when clicking outside
-                document.addEventListener('click', function(e) {
-                    if (!e.target.closest('.authority-search-container')) {
-                        hideAuthoritySearchResults();
-                    }
-                });
+        async function loadAuthorities() {
+            try {
+                const authorities = await ApiService.getSheetData('Authorities');
+                appState.authorities = authorities;
+                console.log('Authorities loaded:', authorities.length);
+            } catch (error) {
+                console.error('Failed to load authorities:', error);
+                appState.authorities = [];
             }
+        }
 
-            function searchAuthorities(searchTerm) {
-                if (!searchTerm || searchTerm.length < 2) {
+        async function loadUserProfile() {
+            if (!appState.currentUser) return;
+            
+            try {
+                const profile = await ApiService.getUserProfile(appState.currentUser.user_id);
+                if (profile) {
+                    appState.userProfile = profile;
+                    
+                    // Update profile display
+                    document.getElementById('profilePhone').textContent = profile.phone_number || 'Not set';
+                    document.getElementById('profileLocation').textContent = profile.location || 'Not set';
+                    
+                    if (profile.created_at) {
+                        const joinDate = new Date(profile.created_at);
+                        document.getElementById('profileJoinDate').textContent = joinDate.toLocaleDateString();
+                    }
+                    
+                    if (profile.last_login) {
+                        const lastLogin = new Date(profile.last_login);
+                        document.getElementById('profileLastLogin').textContent = lastLogin.toLocaleDateString();
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load user profile:', error);
+            }
+        }
+
+        // Authority Search Functionality
+        let authoritySearchTimeout;
+        const authoritySearchInput = document.getElementById('authoritySearch');
+        const authoritySearchResults = document.getElementById('authoritySearchResults');
+
+        if (authoritySearchInput) {
+            authoritySearchInput.addEventListener('input', function(e) {
+                clearTimeout(authoritySearchTimeout);
+                const searchTerm = e.target.value.trim();
+                
+                if (searchTerm.length === 0) {
                     hideAuthoritySearchResults();
                     return;
                 }
-
-                const term = searchTerm.toLowerCase();
-                const results = appState.authorities.filter(authority => 
-                    authority.name && authority.name.toLowerCase().includes(term)
-                ).slice(0, 10); // Limit to 10 results
-
-                renderAuthoritySearchResults(results);
-            }
-
-            function renderAuthoritySearchResults(results) {
-                authoritySearchResults.innerHTML = '';
                 
-                if (results.length === 0) {
-                    const noResults = document.createElement('div');
-                    noResults.className = 'authority-result-item';
-                    noResults.textContent = 'No authorities found';
-                    authoritySearchResults.appendChild(noResults);
-                } else {
-                    results.forEach(authority => {
-                        const item = document.createElement('div');
-                        item.className = 'authority-result-item';
-                        item.innerHTML = `
-                            <div class="authority-name">${authority.name}</div>
-                            <div class="authority-handle">${authority.handle || 'No handle'}</div>
-                        `;
-                        
-                        item.onclick = () => {
-                            addSelectedAuthority(authority);
-                            authoritySearchInput.value = '';
-                            hideAuthoritySearchResults();
-                        };
-                        
-                        authoritySearchResults.appendChild(item);
-                    });
+                authoritySearchTimeout = setTimeout(() => {
+                    searchAuthorities(searchTerm);
+                }, 300);
+            });
+
+            authoritySearchInput.addEventListener('focus', function() {
+                if (this.value.trim().length > 0) {
+                    searchAuthorities(this.value.trim());
                 }
-                
-                authoritySearchResults.classList.add('active');
-            }
+            });
 
-            function hideAuthoritySearchResults() {
-                authoritySearchResults.classList.remove('active');
-            }
-
-            function addSelectedAuthority(authority) {
-                // Check if already selected
-                const isAlreadySelected = appState.selectedAuthorities.some(
-                    a => a.authority_id === authority.authority_id
-                );
-                
-                if (!isAlreadySelected) {
-                    appState.selectedAuthorities.push(authority);
-                    renderSelectedAuthorities();
+            // Close search results when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.authority-search-container')) {
+                    hideAuthoritySearchResults();
                 }
+            });
+        }
+
+        function searchAuthorities(searchTerm) {
+            if (!searchTerm || searchTerm.length < 2) {
+                hideAuthoritySearchResults();
+                return;
             }
 
-            function removeSelectedAuthority(authorityId) {
-                appState.selectedAuthorities = appState.selectedAuthorities.filter(
-                    a => a.authority_id !== authorityId
-                );
+            const term = searchTerm.toLowerCase();
+            const results = appState.authorities.filter(authority => 
+                authority.name && authority.name.toLowerCase().includes(term)
+            ).slice(0, 10); // Limit to 10 results
+
+            renderAuthoritySearchResults(results);
+        }
+
+        function renderAuthoritySearchResults(results) {
+            authoritySearchResults.innerHTML = '';
+            
+            if (results.length === 0) {
+                const noResults = document.createElement('div');
+                noResults.className = 'authority-result-item';
+                noResults.textContent = 'No authorities found';
+                authoritySearchResults.appendChild(noResults);
+            } else {
+                results.forEach(authority => {
+                    const item = document.createElement('div');
+                    item.className = 'authority-result-item';
+                    item.innerHTML = `
+                        <div class="authority-name">${authority.name}</div>
+                        <div class="authority-handle">${authority.handle || 'No handle'}</div>
+                    `;
+                    
+                    item.onclick = () => {
+                        addSelectedAuthority(authority);
+                        authoritySearchInput.value = '';
+                        hideAuthoritySearchResults();
+                    };
+                    
+                    authoritySearchResults.appendChild(item);
+                });
+            }
+            
+            authoritySearchResults.classList.add('active');
+        }
+
+        function hideAuthoritySearchResults() {
+            authoritySearchResults.classList.remove('active');
+        }
+
+        function addSelectedAuthority(authority) {
+            // Check if already selected
+            const isAlreadySelected = appState.selectedAuthorities.some(
+                a => a.authority_id === authority.authority_id
+            );
+            
+            if (!isAlreadySelected) {
+                appState.selectedAuthorities.push(authority);
                 renderSelectedAuthorities();
             }
+        }
 
-            function renderSelectedAuthorities() {
-                const container = document.getElementById('selectedAuthorities');
-                container.innerHTML = '';
+        function removeSelectedAuthority(authorityId) {
+            appState.selectedAuthorities = appState.selectedAuthorities.filter(
+                a => a.authority_id !== authorityId
+            );
+            renderSelectedAuthorities();
+        }
+
+        function renderSelectedAuthorities() {
+            const container = document.getElementById('selectedAuthorities');
+            container.innerHTML = '';
+            
+            if (appState.selectedAuthorities.length === 0) {
+                const emptyMessage = document.createElement('div');
+                emptyMessage.style.color = '#657786';
+                emptyMessage.style.fontSize = '14px';
+                emptyMessage.style.fontStyle = 'italic';
+                emptyMessage.textContent = 'No authorities selected yet';
+                container.appendChild(emptyMessage);
+                return;
+            }
+            
+            appState.selectedAuthorities.forEach(authority => {
+                const tag = document.createElement('div');
+                tag.className = 'selected-authority';
+                tag.innerHTML = `
+                    ${authority.name}
+                    <button class="remove-authority" onclick="removeSelectedAuthority('${authority.authority_id}')">×</button>
+                `;
+                container.appendChild(tag);
+            });
+        }
+
+        // User Search Functionality
+        let userSearchTimeout;
+        const userSearchInput = document.getElementById('userSearch');
+        const userSearchResults = document.getElementById('userSearchResults');
+
+        if (userSearchInput) {
+            userSearchInput.addEventListener('input', function(e) {
+                clearTimeout(userSearchTimeout);
+                const searchTerm = e.target.value.trim();
                 
-                if (appState.selectedAuthorities.length === 0) {
-                    const emptyMessage = document.createElement('div');
-                    emptyMessage.style.color = '#657786';
-                    emptyMessage.style.fontSize = '14px';
-                    emptyMessage.style.fontStyle = 'italic';
-                    emptyMessage.textContent = 'No authorities selected yet';
-                    container.appendChild(emptyMessage);
+                if (searchTerm.length === 0) {
+                    hideUserSearchResults();
                     return;
                 }
                 
-                appState.selectedAuthorities.forEach(authority => {
-                    const tag = document.createElement('div');
-                    tag.className = 'selected-authority';
-                    tag.innerHTML = `
-                        ${authority.name}
-                        <button class="remove-authority" onclick="removeSelectedAuthority('${authority.authority_id}')">×</button>
-                    `;
-                    container.appendChild(tag);
-                });
+                userSearchTimeout = setTimeout(async () => {
+                    await searchUsers(searchTerm);
+                }, 300);
+            });
+
+            userSearchInput.addEventListener('focus', function() {
+                if (this.value.trim().length > 0) {
+                    searchUsers(this.value.trim());
+                }
+            });
+
+            // Close search results when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.authority-search-container')) {
+                    hideUserSearchResults();
+                }
+            });
+        }
+
+        async function searchUsers(searchTerm) {
+            if (!searchTerm || searchTerm.length < 2) {
+                hideUserSearchResults();
+                return;
             }
 
-            // Additional Tags Autocomplete
-            const customTagsInput = document.getElementById('customTags');
-            const autocompleteDropdown = document.getElementById('autocompleteDropdown');
+            try {
+                const users = await ApiService.searchUsersByUsername(searchTerm);
+                renderUserSearchResults(users);
+            } catch (error) {
+                console.error('Failed to search users:', error);
+                hideUserSearchResults();
+            }
+        }
 
-            if (customTagsInput) {
-                customTagsInput.addEventListener('input', async function(e) {
-                    const value = e.target.value;
-                    const lastWord = value.split(' ').pop();
+        function renderUserSearchResults(users) {
+            userSearchResults.innerHTML = '';
+            
+            if (users.length === 0) {
+                const noResults = document.createElement('div');
+                noResults.className = 'user-result-item';
+                noResults.textContent = 'No users found';
+                userSearchResults.appendChild(noResults);
+            } else {
+                users.forEach(user => {
+                    // Don't show current user in results
+                    if (user.user_id === appState.currentUser?.user_id) return;
                     
-                    if (lastWord.startsWith('@') && lastWord.length > 1) {
-                        const searchTerm = lastWord.substring(1).toLowerCase();
-                        await showAutocomplete(searchTerm);
-                    } else {
-                        hideAutocompleteDropdown();
-                    }
-                });
-
-                customTagsInput.addEventListener('blur', function() {
-                    setTimeout(() => {
-                        hideAutocompleteDropdown();
-                    }, 200);
+                    const item = document.createElement('div');
+                    item.className = 'user-result-item';
+                    item.innerHTML = `
+                        <div class="user-name">${user.full_name}</div>
+                        <div class="user-username">@${user.username}</div>
+                    `;
+                    
+                    item.onclick = () => {
+                        addSelectedUser(user);
+                        userSearchInput.value = '';
+                        hideUserSearchResults();
+                    };
+                    
+                    userSearchResults.appendChild(item);
                 });
             }
+            
+            userSearchResults.classList.add('active');
+        }
 
-            async function showAutocomplete(searchTerm) {
-                try {
-                    const [users, authorities] = await Promise.all([
-                        ApiService.getSheetData('Users'),
-                        Promise.resolve(appState.authorities.length > 0 ? appState.authorities : await ApiService.getSheetData('Authorities'))
-                    ]);
+        function hideUserSearchResults() {
+            userSearchResults.classList.remove('active');
+        }
 
-                    const userMatches = users.filter(user => 
-                        user.username && user.username.toLowerCase().includes(searchTerm)
-                    ).slice(0, 5);
+        function addSelectedUser(user) {
+            // Check if already selected
+            const isAlreadySelected = appState.selectedUsers.some(
+                u => u.user_id === user.user_id
+            );
+            
+            if (!isAlreadySelected) {
+                appState.selectedUsers.push(user);
+                renderSelectedUsers();
+            }
+        }
 
-                    const authorityMatches = authorities.filter(auth => 
-                        auth.handle && auth.handle.toLowerCase().includes('@' + searchTerm)
-                    ).slice(0, 5);
+        function removeSelectedUser(userId) {
+            appState.selectedUsers = appState.selectedUsers.filter(
+                u => u.user_id !== userId
+            );
+            renderSelectedUsers();
+        }
 
-                    const allMatches = [...userMatches.map(u => ({
-                        type: 'user',
-                        name: u.username,
-                        handle: '@' + u.username
-                    })), ...authorityMatches.map(a => ({
-                        type: 'authority',
-                        name: a.name,
-                        handle: a.handle
-                    }))];
+        function renderSelectedUsers() {
+            const container = document.getElementById('selectedUsers');
+            container.innerHTML = '';
+            
+            if (appState.selectedUsers.length === 0) {
+                const emptyMessage = document.createElement('div');
+                emptyMessage.style.color = '#657786';
+                emptyMessage.style.fontSize = '14px';
+                emptyMessage.style.fontStyle = 'italic';
+                emptyMessage.textContent = 'No users selected yet';
+                container.appendChild(emptyMessage);
+                return;
+            }
+            
+            appState.selectedUsers.forEach(user => {
+                const tag = document.createElement('div');
+                tag.className = 'selected-user';
+                tag.innerHTML = `
+                    @${user.username}
+                    <button class="remove-user" onclick="removeSelectedUser('${user.user_id}')">×</button>
+                `;
+                container.appendChild(tag);
+            });
+        }
 
-                    if (allMatches.length > 0) {
-                        renderAutocomplete(allMatches);
-                    } else {
-                        hideAutocompleteDropdown();
-                    }
-                } catch (error) {
-                    console.error('Autocomplete error:', error);
+        // Additional Tags Autocomplete
+        const customTagsInput = document.getElementById('customTags');
+        const autocompleteDropdown = document.getElementById('autocompleteDropdown');
+
+        if (customTagsInput) {
+            customTagsInput.addEventListener('input', async function(e) {
+                const value = e.target.value;
+                const lastWord = value.split(' ').pop();
+                
+                if (lastWord.startsWith('@') && lastWord.length > 1) {
+                    const searchTerm = lastWord.substring(1).toLowerCase();
+                    await showAutocomplete(searchTerm);
+                } else {
                     hideAutocompleteDropdown();
                 }
-            }
+            });
 
-            function renderAutocomplete(matches) {
-                autocompleteDropdown.innerHTML = '';
-                
-                matches.forEach(match => {
-                    const item = document.createElement('div');
-                    item.className = 'autocomplete-item';
-                    item.innerHTML = `
-                        <div class="autocomplete-name">${match.name}</div>
-                        <div class="autocomplete-handle">${match.handle}</div>
-                    `;
-                    item.onclick = () => selectAutocompleteItem(match.handle);
-                    autocompleteDropdown.appendChild(item);
-                });
+            customTagsInput.addEventListener('blur', function() {
+                setTimeout(() => {
+                    hideAutocompleteDropdown();
+                }, 200);
+            });
+        }
 
-                autocompleteDropdown.classList.add('active');
-            }
+        async function showAutocomplete(searchTerm) {
+            try {
+                const [users, authorities] = await Promise.all([
+                    ApiService.searchUsersByUsername(searchTerm),
+                    Promise.resolve(appState.authorities.length > 0 ? appState.authorities : await ApiService.getSheetData('Authorities'))
+                ]);
 
-            function hideAutocompleteDropdown() {
-                autocompleteDropdown.classList.remove('active');
-            }
+                const userMatches = users.filter(user => 
+                    user.username && user.username.toLowerCase().includes(searchTerm)
+                ).slice(0, 5);
 
-            function selectAutocompleteItem(handle) {
-                const input = document.getElementById('customTags');
-                const words = input.value.split(' ');
-                words[words.length - 1] = handle;
-                input.value = words.join(' ') + ' ';
-                hideAutocompleteDropdown();
-                input.focus();
-            }
+                const authorityMatches = authorities.filter(auth => 
+                    auth.handle && auth.handle.toLowerCase().includes('@' + searchTerm)
+                ).slice(0, 5);
 
-            async function handleFileUpload() {
-                const input = document.getElementById('fileInput');
-                const file = input.files[0];
-                
-                if (!file) return;
+                const allMatches = [...userMatches.map(u => ({
+                    type: 'user',
+                    id: u.user_id,
+                    name: u.username,
+                    handle: '@' + u.username
+                })), ...authorityMatches.map(a => ({
+                    type: 'authority',
+                    id: a.authority_id,
+                    name: a.name,
+                    handle: a.handle
+                }))];
 
-                const uploadedFile = await ApiService.uploadMedia(file);
-                
-                if (uploadedFile) {
-                    appState.currentUploadedFile = uploadedFile;
-                    displayUploadPreview(uploadedFile);
-                }
-            }
-
-            function displayUploadPreview(file) {
-                const preview = document.getElementById('uploadPreview');
-                preview.innerHTML = '';
-                
-                const container = document.createElement('div');
-                container.style.position = 'relative';
-                
-                if (file.type.startsWith('image/')) {
-                    const img = document.createElement('img');
-                    img.src = file.url;
-                    container.appendChild(img);
-                } else if (file.type.startsWith('video/')) {
-                    const video = document.createElement('video');
-                    video.src = file.url;
-                    video.controls = true;
-                    container.appendChild(video);
-                }
-                
-                const removeBtn = document.createElement('button');
-                removeBtn.className = 'remove-upload';
-                removeBtn.textContent = '×';
-                removeBtn.onclick = removeUpload;
-                container.appendChild(removeBtn);
-                
-                preview.appendChild(container);
-            }
-
-            function removeUpload() {
-                appState.currentUploadedFile = null;
-                document.getElementById('uploadPreview').innerHTML = '';
-                document.getElementById('fileInput').value = '';
-            }
-
-            async function submitReport() {
-                if (!appState.currentUser) {
-                    showMessage('Please login to submit a report', 'error');
-                    return;
-                }
-
-                const description = document.getElementById('description').value.trim();
-                const locationName = document.getElementById('locationName').value.trim();
-                const useCoordinates = document.getElementById('useCoordinates').checked;
-                const latitude = document.getElementById('latitude').value.trim();
-                const longitude = document.getElementById('longitude').value.trim();
-                const customTags = document.getElementById('customTags').value.trim();
-
-                if (!description) {
-                    showMessage('Please enter a description', 'error');
-                    return;
-                }
-
-                if (description.length > 500) {
-                    showMessage('Description too long. Please keep it under 500 characters.', 'error');
-                    return;
-                }
-
-                setLoading(true, '.btn-primary');
-
-                // Prepare media data
-                let mediaData = null;
-                if (appState.currentUploadedFile) {
-                    mediaData = {
-                        url: appState.currentUploadedFile.url,
-                        type: appState.currentUploadedFile.type,
-                        name: appState.currentUploadedFile.name
-                    };
-                }
-
-                // Get authority handles from selected authorities
-                const authorityHandles = appState.selectedAuthorities.map(a => a.handle);
-                
-                // Combine with any @ handles from custom tags
-                const customTagsArray = customTags.split(' ').filter(tag => tag.startsWith('@'));
-                const allAuthorities = [...authorityHandles, ...customTagsArray.filter(tag => 
-                    !authorityHandles.includes(tag)
-                )];
-
-                // Prepare location data
-                let finalLocation = locationName || 'Location not specified';
-                let finalLatitude = '';
-                let finalLongitude = '';
-
-                if (useCoordinates && latitude && longitude) {
-                    finalLatitude = parseFloat(latitude).toFixed(6);
-                    finalLongitude = parseFloat(longitude).toFixed(6);
-                    if (locationName) {
-                        finalLocation = `${locationName} (${finalLatitude}, ${finalLongitude})`;
-                    } else {
-                        finalLocation = `${finalLatitude}, ${finalLongitude}`;
-                    }
-                }
-
-                // Format data for API
-                const reportData = {
-                    user_id: appState.currentUser.user_id,
-                    description: description,
-                    location: finalLocation,
-                    latitude: finalLatitude,
-                    longitude: finalLongitude,
-                    authorities: allAuthorities,
-                    custom_tags: customTagsArray,
-                    media: mediaData
-                };
-
-                console.log('Submitting report:', reportData);
-
-                const result = await ApiService.request('create_report', reportData);
-
-                setLoading(false, '.btn-primary');
-
-                if (result.success) {
-                    showMessage('Report submitted successfully!', 'success');
-                    resetReportForm();
-                    showScreen('home');
-                    setTimeout(() => loadFeed(), 1000);
+                if (allMatches.length > 0) {
+                    renderAutocomplete(allMatches);
                 } else {
-                    showMessage(result.error || 'Failed to submit report. Please try again.', 'error');
+                    hideAutocompleteDropdown();
                 }
-            }
-
-            function resetReportForm() {
-                document.getElementById('description').value = '';
-                document.getElementById('locationName').value = '';
-                document.getElementById('useCoordinates').checked = false;
-                toggleCoordinateFields();
-                document.getElementById('latitude').value = '';
-                document.getElementById('longitude').value = '';
-                document.getElementById('authoritySearch').value = '';
-                document.getElementById('customTags').value = '';
-                document.getElementById('uploadPreview').innerHTML = '';
-                document.getElementById('fileInput').value = '';
-                
-                appState.selectedAuthorities = [];
-                appState.currentUploadedFile = null;
-                
-                renderSelectedAuthorities();
-                updateCharCount();
-                hideAuthoritySearchResults();
+            } catch (error) {
+                console.error('Autocomplete error:', error);
                 hideAutocompleteDropdown();
             }
+        }
 
-            // Feed Functions
-            async function loadFeed(isRefresh = false) {
-                const container = document.getElementById('feedContainer');
-                if (!container) return;
+        function renderAutocomplete(matches) {
+            autocompleteDropdown.innerHTML = '';
+            
+            matches.forEach(match => {
+                const item = document.createElement('div');
+                item.className = 'autocomplete-item';
+                item.innerHTML = `
+                    <div class="autocomplete-name">${match.name}</div>
+                    <div class="autocomplete-handle">${match.handle}</div>
+                `;
+                item.onclick = () => selectAutocompleteItem(match.handle);
+                autocompleteDropdown.appendChild(item);
+            });
 
-                if (!isRefresh) {
-                    container.innerHTML = '<div class="loading-spinner" style="margin: 40px auto;"></div>';
+            autocompleteDropdown.classList.add('active');
+        }
+
+        function hideAutocompleteDropdown() {
+            autocompleteDropdown.classList.remove('active');
+        }
+
+        function selectAutocompleteItem(handle) {
+            const input = document.getElementById('customTags');
+            const words = input.value.split(' ');
+            words[words.length - 1] = handle;
+            input.value = words.join(' ') + ' ';
+            hideAutocompleteDropdown();
+            input.focus();
+        }
+
+        async function handleFileUpload() {
+            const input = document.getElementById('fileInput');
+            const file = input.files[0];
+            
+            if (!file) return;
+
+            const uploadedFile = await ApiService.uploadMedia(file);
+            
+            if (uploadedFile) {
+                appState.currentUploadedFile = uploadedFile;
+                displayUploadPreview(uploadedFile);
+            }
+        }
+
+        function displayUploadPreview(file) {
+            const preview = document.getElementById('uploadPreview');
+            preview.innerHTML = '';
+            
+            const container = document.createElement('div');
+            container.style.position = 'relative';
+            
+            if (file.type.startsWith('image/')) {
+                const img = document.createElement('img');
+                img.src = file.url;
+                container.appendChild(img);
+            } else if (file.type.startsWith('video/')) {
+                const video = document.createElement('video');
+                video.src = file.url;
+                video.controls = true;
+                container.appendChild(video);
+            }
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'remove-upload';
+            removeBtn.textContent = '×';
+            removeBtn.onclick = removeUpload;
+            container.appendChild(removeBtn);
+            
+            preview.appendChild(container);
+        }
+
+        function removeUpload() {
+            appState.currentUploadedFile = null;
+            document.getElementById('uploadPreview').innerHTML = '';
+            document.getElementById('fileInput').value = '';
+        }
+
+        async function submitReport() {
+            if (!appState.currentUser) {
+                showMessage('Please login to submit a report', 'error');
+                return;
+            }
+
+            const description = document.getElementById('description').value.trim();
+            const locationName = document.getElementById('locationName').value.trim();
+            const useCoordinates = document.getElementById('useCoordinates').checked;
+            const latitude = document.getElementById('latitude').value.trim();
+            const longitude = document.getElementById('longitude').value.trim();
+            const customTags = document.getElementById('customTags').value.trim();
+
+            if (!description) {
+                showMessage('Please enter a description', 'error');
+                return;
+            }
+
+            if (description.length > 500) {
+                showMessage('Description too long. Please keep it under 500 characters.', 'error');
+                return;
+            }
+
+            setLoading(true, '.btn-primary');
+
+            // Prepare media data
+            let mediaData = null;
+            if (appState.currentUploadedFile) {
+                mediaData = {
+                    url: appState.currentUploadedFile.url,
+                    type: appState.currentUploadedFile.type,
+                    name: appState.currentUploadedFile.name
+                };
+            }
+
+            // Get authority handles from selected authorities
+            const authorityHandles = appState.selectedAuthorities.map(a => a.handle);
+            
+            // Get user handles from selected users
+            const userHandles = appState.selectedUsers.map(u => `@${u.username}`);
+            
+            // Combine with any @ handles from custom tags
+            const customTagsArray = customTags.split(' ').filter(tag => tag.startsWith('@'));
+            const allTags = [...authorityHandles, ...userHandles, ...customTagsArray.filter(tag => 
+                !authorityHandles.includes(tag) && !userHandles.includes(tag)
+            )];
+
+            // Prepare location data
+            let finalLocation = locationName || 'Location not specified';
+            let finalLatitude = '';
+            let finalLongitude = '';
+
+            if (useCoordinates && latitude && longitude) {
+                finalLatitude = parseFloat(latitude).toFixed(6);
+                finalLongitude = parseFloat(longitude).toFixed(6);
+                if (locationName) {
+                    finalLocation = `${locationName} (${finalLatitude}, ${finalLongitude})`;
+                } else {
+                    finalLocation = `${finalLatitude}, ${finalLongitude}`;
+                }
+            }
+
+            // Format data for API
+            const reportData = {
+                user_id: appState.currentUser.user_id,
+                description: description,
+                location: finalLocation,
+                latitude: finalLatitude,
+                longitude: finalLongitude,
+                authorities: authorityHandles,
+                custom_tags: [...userHandles, ...customTagsArray],
+                media: mediaData
+            };
+
+            console.log('Submitting report:', reportData);
+
+            const result = await ApiService.request('create_report', reportData);
+
+            setLoading(false, '.btn-primary');
+
+            if (result.success) {
+                showMessage('Report submitted successfully!', 'success');
+                resetReportForm();
+                showScreen('home');
+                setTimeout(() => loadFeed(), 1000);
+            } else {
+                showMessage(result.error || 'Failed to submit report. Please try again.', 'error');
+            }
+        }
+
+        function resetReportForm() {
+            document.getElementById('description').value = '';
+            document.getElementById('locationName').value = '';
+            document.getElementById('useCoordinates').checked = false;
+            toggleCoordinateFields();
+            document.getElementById('latitude').value = '';
+            document.getElementById('longitude').value = '';
+            document.getElementById('authoritySearch').value = '';
+            document.getElementById('userSearch').value = '';
+            document.getElementById('customTags').value = '';
+            document.getElementById('uploadPreview').innerHTML = '';
+            document.getElementById('fileInput').value = '';
+            
+            appState.selectedAuthorities = [];
+            appState.selectedUsers = [];
+            appState.currentUploadedFile = null;
+            
+            renderSelectedAuthorities();
+            renderSelectedUsers();
+            updateCharCount();
+            hideAuthoritySearchResults();
+            hideUserSearchResults();
+            hideAutocompleteDropdown();
+        }
+
+        // Feed Functions
+        async function loadFeed(isRefresh = false) {
+            const container = document.getElementById('feedContainer');
+            if (!container) return;
+
+            if (!isRefresh) {
+                container.innerHTML = '<div class="loading-spinner" style="margin: 40px auto;"></div>';
+            }
+
+            try {
+                const reports = await ApiService.getSheetData('Reports');
+                
+                if (reports.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: #657786;">
+                            <div style="font-size: 48px; margin-bottom: 16px;">📱</div>
+                            <h3>No reports yet</h3>
+                            <p>Be the first to report an incident in your community</p>
+                            <button class="btn btn-primary" onclick="showScreen('report')" style="margin-top: 16px;">
+                                Create First Report
+                            </button>
+                        </div>
+                    `;
+                    return;
                 }
 
-                try {
-                    const reports = await ApiService.getSheetData('Reports');
-                    
-                    if (reports.length === 0) {
-                        container.innerHTML = `
-                            <div style="text-align: center; padding: 40px; color: #657786;">
-                                <div style="font-size: 48px; margin-bottom: 16px;">📱</div>
-                                <h3>No reports yet</h3>
-                                <p>Be the first to report an incident in your community</p>
-                                <button class="btn btn-primary" onclick="showScreen('report')" style="margin-top: 16px;">
-                                    Create First Report
-                                </button>
-                            </div>
-                        `;
+                reports.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+                if (isRefresh) {
+                    // For refresh, update only if content changed
+                    const currentReports = container.querySelectorAll('.post');
+                    if (currentReports.length === reports.length) {
+                        // Simple check - in real app you might want more sophisticated diffing
                         return;
                     }
+                }
 
-                    reports.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-                    if (isRefresh) {
-                        // For refresh, update only if content changed
-                        const currentReports = container.querySelectorAll('.post');
-                        if (currentReports.length === reports.length) {
-                            // Simple check - in real app you might want more sophisticated diffing
-                            return;
+                container.innerHTML = '';
+                reports.forEach(report => {
+                    // Parse JSON fields
+                    let authorities = [];
+                    let customTags = [];
+                    
+                    try {
+                        if (report.authorities && report.authorities !== 'authorities') {
+                            authorities = JSON.parse(report.authorities);
+                        }
+                        if (report.custom_tags && report.custom_tags !== 'custom_tags') {
+                            customTags = JSON.parse(report.custom_tags);
+                        }
+                    } catch (e) {
+                        console.log('Error parsing report data:', e);
+                    }
+                    
+                    // Get media URL if available
+                    let media = null;
+                    if (report.media_urls) {
+                        media = { url: report.media_urls, type: report.media_types || 'image/*' };
+                    }
+                    
+                    // Get username from Users table
+                    let username = 'Anonymous';
+                    if (report.user_id) {
+                        // Try to get from appState.users first
+                        if (appState.users) {
+                            const user = appState.users.find(u => u.user_id === report.user_id);
+                            if (user) {
+                                username = user.username;
+                            }
                         }
                     }
+                    
+                    const postEl = createPostElement({
+                        ...report,
+                        username: username,
+                        authorities: authorities,
+                        custom_tags: customTags,
+                        media: media
+                    });
+                    container.appendChild(postEl);
+                });
 
-                    container.innerHTML = '';
-                    reports.forEach(report => {
-                        // Parse JSON fields
-                        let authorities = [];
-                        let customTags = [];
-                        
-                        try {
-                            if (report.authorities && report.authorities !== 'authorities') {
-                                authorities = JSON.parse(report.authorities);
-                            }
-                            if (report.custom_tags && report.custom_tags !== 'custom_tags') {
-                                customTags = JSON.parse(report.custom_tags);
-                            }
-                        } catch (e) {
-                            console.log('Error parsing report data:', e);
+            } catch (error) {
+                console.error('Failed to load feed:', error);
+                if (!isRefresh) {
+                    container.innerHTML = `
+                        <div class="error-message">
+                            Failed to load feed. Please check your connection and try again.
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        function createPostElement(report) {
+            const post = document.createElement('div');
+            post.className = 'post';
+            post.id = `post-${report.report_id}`;
+            
+            const canDelete = appState.currentUser && 
+                (appState.currentUser.user_id === report.user_id || 
+                 appState.currentUser.role === 'admin');
+            
+            const timeText = report.created_at ? formatTime(report.created_at) : 'Recently';
+            
+            // Get upvote count
+            const upvoteCount = report.upvotes || 0;
+            
+            post.innerHTML = `
+                <div class="post-header">
+                    <div class="post-user">${report.username || 'Anonymous'}</div>
+                    <div>
+                        <span class="post-time">${timeText}</span>
+                        ${canDelete ? `<button class="delete-btn" onclick="deleteReport('${report.report_id}')">Delete</button>` : ''}
+                    </div>
+                </div>
+                
+                ${report.media && report.media.url ? `
+                    <div class="post-media">
+                        ${report.media.type && report.media.type.startsWith('image/') ? 
+                            `<img src="${report.media.url}" alt="Report media" loading="lazy">` :
+                            `<video src="${report.media.url}" controls></video>`
                         }
-                        
-                        // Get media URL if available
-                        let media = null;
+                    </div>
+                ` : ''}
+                
+                <div class="post-description">${report.description || 'No description'}</div>
+                
+                ${(report.authorities && report.authorities.length > 0) || (report.custom_tags && report.custom_tags.length > 0) ? `
+                    <div class="post-tags">
+                        ${report.authorities ? report.authorities.map(auth => `<span class="tag">${auth}</span>`).join('') : ''}
+                        ${report.custom_tags ? report.custom_tags.map(tag => `<span class="tag">${tag}</span>`).join('') : ''}
+                    </div>
+                ` : ''}
+                
+                <div class="post-location">📍 ${report.location || 'Location not specified'}
+                ${report.latitude && report.longitude ? `<br><small>Coordinates: ${report.latitude}, ${report.longitude}</small>` : ''}
+                </div>
+                
+                <div class="post-actions">
+                    <div class="post-action" onclick="upvoteReport('${report.report_id}')">
+                        <span>👍</span>
+                        <span id="upvotes-${report.report_id}">${upvoteCount}</span>
+                    </div>
+                    <div class="post-action" onclick="showComments('${report.report_id}')">
+                        <span>💬</span>
+                        <span>Comment</span>
+                    </div>
+                    <div class="post-action" onclick="shareReport('${report.report_id}')">
+                        <span>↗️</span>
+                        <span>Share</span>
+                    </div>
+                </div>
+            `;
+            
+            return post;
+        }
+
+        async function deleteReport(reportId) {
+            if (!confirm('Are you sure you want to delete this report?')) return;
+
+            const result = await ApiService.request('delete_report', {
+                report_id: reportId,
+                user_id: appState.currentUser.user_id
+            });
+
+            if (result.success) {
+                showMessage('Report deleted successfully', 'success');
+                loadFeed();
+            } else {
+                showMessage(result.error || 'Failed to delete report', 'error');
+            }
+        }
+
+        async function upvoteReport(reportId) {
+            if (!appState.currentUser) {
+                showMessage('Please login to upvote', 'error');
+                return;
+            }
+
+            const result = await ApiService.request('upvote_report', {
+                report_id: reportId,
+                user_id: appState.currentUser.user_id
+            });
+
+            if (result.success) {
+                // Update the upvote count immediately
+                const upvoteElement = document.getElementById(`upvotes-${reportId}`);
+                if (upvoteElement) {
+                    const currentCount = parseInt(upvoteElement.textContent) || 0;
+                    upvoteElement.textContent = currentCount + 1;
+                }
+                showMessage('Upvoted!', 'success');
+            } else {
+                showMessage(result.error || 'Failed to upvote', 'error');
+            }
+        }
+
+        // Comments Functions
+        async function showComments(reportId) {
+            appState.currentReportId = reportId;
+            
+            // Load comments
+            const comments = await ApiService.getCommentsForReport(reportId);
+            appState.comments[reportId] = comments;
+            
+            // Show modal
+            const modal = document.getElementById('commentsModal');
+            modal.classList.remove('hidden');
+            
+            // Render comments
+            renderComments(comments);
+            
+            // Focus on input
+            setTimeout(() => {
+                document.getElementById('commentInput').focus();
+            }, 100);
+        }
+
+        function hideCommentsModal() {
+            document.getElementById('commentsModal').classList.add('hidden');
+            document.getElementById('commentInput').value = '';
+            appState.currentReportId = null;
+        }
+
+        function renderComments(comments) {
+            const container = document.getElementById('commentsContainer');
+            container.innerHTML = '';
+            
+            if (comments.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #657786;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">💬</div>
+                        <h3>No comments yet</h3>
+                        <p>Be the first to comment</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Sort comments by date
+            comments.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+            
+            // Group comments by parent
+            const commentMap = {};
+            const rootComments = [];
+            
+            comments.forEach(comment => {
+                commentMap[comment.comment_id] = comment;
+                if (!comment.parent_id) {
+                    rootComments.push(comment);
+                }
+            });
+            
+            // Render comments
+            rootComments.forEach(comment => {
+                container.appendChild(createCommentElement(comment, commentMap));
+            });
+        }
+
+        function createCommentElement(comment, commentMap) {
+            const commentEl = document.createElement('div');
+            commentEl.className = 'comment-item';
+            
+            // Get username
+            let username = 'Anonymous';
+            if (comment.user_id) {
+                // Try to find user in current data
+                if (appState.users) {
+                    const user = appState.users.find(u => u.user_id === comment.user_id);
+                    if (user) {
+                        username = user.username;
+                    }
+                }
+            }
+            
+            const timeText = formatTime(comment.created_at);
+            
+            commentEl.innerHTML = `
+                <div class="comment-header">
+                    <div class="comment-user">${username}</div>
+                    <div class="comment-time">${timeText}</div>
+                </div>
+                <div class="comment-content">${comment.content}</div>
+                ${appState.currentUser ? `<button class="comment-reply" onclick="replyToComment('${comment.comment_id}')">Reply</button>` : ''}
+            `;
+            
+            return commentEl;
+        }
+
+        function replyToComment(commentId) {
+            const input = document.getElementById('commentInput');
+            // Now the backend will handle converting @comment_id to @username
+            input.value = `@${commentId} `;
+            input.focus();
+        }
+
+        async function submitComment() {
+            if (!appState.currentUser) {
+                showMessage('Please login to comment', 'error');
+                return;
+            }
+
+            const content = document.getElementById('commentInput').value.trim();
+            if (!content) {
+                showMessage('Please enter a comment', 'error');
+                return;
+            }
+
+            if (!appState.currentReportId) {
+                showMessage('No report selected', 'error');
+                return;
+            }
+
+            const commentData = {
+                report_id: appState.currentReportId,
+                user_id: appState.currentUser.user_id,
+                content: content
+            };
+
+            // Check if this is a reply to a comment
+            const words = content.split(' ');
+            const firstWord = words[0];
+            if (firstWord.startsWith('@comment_')) {
+                const parentId = firstWord.substring(1);
+                commentData.parent_id = parentId;
+            }
+
+            const result = await ApiService.request('add_comment', commentData);
+
+            if (result.success) {
+                showMessage('Comment added successfully!', 'success');
+                document.getElementById('commentInput').value = '';
+                
+                // Refresh comments
+                const comments = await ApiService.getCommentsForReport(appState.currentReportId);
+                appState.comments[appState.currentReportId] = comments;
+                renderComments(comments);
+            } else {
+                showMessage(result.error || 'Failed to add comment', 'error');
+            }
+        }
+
+        function shareReport(reportId) {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'iReporter NG Report',
+                    text: 'Check out this report on iReporter NG',
+                    url: window.location.href
+                }).catch(err => console.log('Error sharing:', err));
+            } else {
+                showMessage('Share feature not supported on this device', 'info');
+            }
+        }
+
+        function formatTime(timestamp) {
+            if (!timestamp) return 'Recently';
+            
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+            
+            if (diff < 60000) return 'Just now';
+            if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
+            if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
+            if (diff < 604800000) return Math.floor(diff / 86400000) + 'd ago';
+            
+            return date.toLocaleDateString();
+        }
+
+        // Directory Functions
+        async function loadDirectory() {
+            const list = document.getElementById('directoryList');
+            if (!list) return;
+
+            list.innerHTML = '<div class="loading-spinner" style="margin: 40px auto;"></div>';
+
+            try {
+                const authorities = appState.authorities.length > 0 
+                    ? appState.authorities 
+                    : await ApiService.getSheetData('Authorities');
+                
+                appState.authorities = authorities;
+                renderDirectoryList(authorities);
+            } catch (error) {
+                console.error('Failed to load directory:', error);
+                list.innerHTML = `
+                    <div class="error-message">
+                        Failed to load directory. Please check your connection.
+                    </div>
+                `;
+            }
+        }
+
+        function renderDirectoryList(authorities) {
+            const list = document.getElementById('directoryList');
+            if (!list) return;
+
+            if (authorities.length === 0) {
+                list.innerHTML = `
+                    <div class="no-results">
+                        <div style="font-size: 48px; margin-bottom: 16px;">🔍</div>
+                        <h3>No authorities found</h3>
+                        <p>Try a different search term or add a new authority</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = '';
+            authorities.forEach(authority => {
+                const item = document.createElement('div');
+                item.className = `directory-item ${authority.is_custom || authority.created_by === appState.currentUser?.user_id ? 'custom' : ''}`;
+                item.onclick = () => selectAuthorityFromDirectory(authority);
+                
+                item.innerHTML = `
+                    <div class="directory-name">${authority.name || 'Unknown Authority'}</div>
+                    <div class="directory-handle">${authority.handle || 'No handle'}</div>
+                    ${authority.description ? `<div style="font-size: 12px; color: #657786; margin-top: 4px;">${authority.description}</div>` : ''}
+                    ${authority.is_custom || authority.created_by ? `
+                        <div class="directory-actions">
+                            <button onclick="event.stopPropagation(); editAuthority('${authority.authority_id}')" title="Edit">✏️</button>
+                            <button onclick="event.stopPropagation(); deleteAuthority('${authority.authority_id}')" class="delete-authority-btn" title="Delete">🗑️</button>
+                        </div>
+                    ` : ''}
+                `;
+                
+                list.appendChild(item);
+            });
+        }
+
+        function selectAuthorityFromDirectory(authority) {
+            // Navigate to report screen and add authority
+            showScreen('report');
+            
+            if (!appState.selectedAuthorities.some(a => a.authority_id === authority.authority_id)) {
+                appState.selectedAuthorities.push(authority);
+                renderSelectedAuthorities();
+            }
+            
+            showMessage(`Added "${authority.name}" to selected authorities`, 'success');
+        }
+
+        function filterDirectory() {
+            const searchTerm = document.getElementById('directorySearch').value.toLowerCase().trim();
+            const authorities = appState.authorities;
+            
+            if (!searchTerm) {
+                renderDirectoryList(authorities);
+                return;
+            }
+            
+            const filtered = authorities.filter(authority => 
+                (authority.name && authority.name.toLowerCase().includes(searchTerm)) ||
+                (authority.handle && authority.handle.toLowerCase().includes(searchTerm)) ||
+                (authority.description && authority.description.toLowerCase().includes(searchTerm))
+            );
+            
+            renderDirectoryList(filtered);
+        }
+
+        function showAddAuthorityModal() {
+            appState.editingAuthority = null;
+            document.getElementById('modalTitle').textContent = 'Add New Authority';
+            document.getElementById('modalSubmitBtn').textContent = 'Add Authority';
+            document.getElementById('modalSubmitBtn').onclick = addNewAuthority;
+            
+            document.getElementById('authorityName').value = '';
+            document.getElementById('authorityHandle').value = '';
+            document.getElementById('authorityDescription').value = '';
+            
+            document.getElementById('addAuthorityModal').classList.remove('hidden');
+            document.getElementById('authorityName').focus();
+        }
+
+        function hideAddAuthorityModal() {
+            document.getElementById('addAuthorityModal').classList.add('hidden');
+        }
+
+        async function addNewAuthority() {
+            const name = document.getElementById('authorityName').value.trim();
+            const handle = document.getElementById('authorityHandle').value.trim();
+            const description = document.getElementById('authorityDescription').value.trim();
+
+            if (!name || !handle) {
+                showMessage('Please enter both name and handle', 'error');
+                return;
+            }
+
+            if (!handle.startsWith('@')) {
+                showMessage('Handle must start with @', 'error');
+                return;
+            }
+
+            const authorityData = {
+                name: name,
+                handle: handle,
+                description: description,
+                created_by: appState.currentUser.user_id
+            };
+
+            const result = await ApiService.request('add_authority', authorityData);
+
+            if (result.success) {
+                showMessage('Authority added successfully!', 'success');
+                hideAddAuthorityModal();
+                appState.authorities = [];
+                loadDirectory();
+            } else {
+                showMessage(result.error || 'Failed to add authority', 'error');
+            }
+        }
+
+        function editAuthority(authorityId) {
+            const authority = appState.authorities.find(a => a.authority_id === authorityId);
+            if (!authority) return;
+
+            appState.editingAuthority = authority;
+            document.getElementById('modalTitle').textContent = 'Edit Authority';
+            document.getElementById('modalSubmitBtn').textContent = 'Update Authority';
+            document.getElementById('modalSubmitBtn').onclick = updateAuthority;
+            
+            document.getElementById('authorityName').value = authority.name || '';
+            document.getElementById('authorityHandle').value = authority.handle || '';
+            document.getElementById('authorityDescription').value = authority.description || '';
+            
+            document.getElementById('addAuthorityModal').classList.remove('hidden');
+        }
+
+        async function updateAuthority() {
+            if (!appState.editingAuthority) return;
+
+            const name = document.getElementById('authorityName').value.trim();
+            const handle = document.getElementById('authorityHandle').value.trim();
+            const description = document.getElementById('authorityDescription').value.trim();
+
+            if (!name || !handle) {
+                showMessage('Please enter both name and handle', 'error');
+                return;
+            }
+
+            const result = await ApiService.request('update_authority', {
+                authority_id: appState.editingAuthority.authority_id,
+                name: name,
+                handle: handle,
+                description: description
+            });
+
+            if (result.success) {
+                showMessage('Authority updated successfully!', 'success');
+                hideAddAuthorityModal();
+                appState.authorities = [];
+                loadDirectory();
+            } else {
+                showMessage(result.error || 'Failed to update authority', 'error');
+            }
+        }
+
+        async function deleteAuthority(authorityId) {
+            if (!confirm('Are you sure you want to delete this authority?')) return;
+
+            const result = await ApiService.request('delete_authority', { authority_id: authorityId });
+
+            if (result.success) {
+                showMessage('Authority deleted successfully', 'success');
+                appState.authorities = [];
+                loadDirectory();
+            } else {
+                showMessage(result.error || 'Failed to delete authority', 'error');
+            }
+        }
+
+        // Profile Functions
+        async function loadProfile() {
+            if (!appState.currentUser) {
+                showScreen('home');
+                return;
+            }
+
+            const profileName = document.getElementById('profileName');
+            const profileStats = document.getElementById('profileStats');
+            const myReports = document.getElementById('myReports');
+            const profileAvatar = document.getElementById('profileAvatar');
+
+            profileName.textContent = appState.currentUser.username || appState.currentUser.email;
+            profileAvatar.textContent = (appState.currentUser.username || appState.currentUser.email).charAt(0).toUpperCase();
+            myReports.innerHTML = '<div class="loading-spinner" style="margin: 40px auto;"></div>';
+
+            try {
+                const allReports = await ApiService.getSheetData('Reports');
+                const userReports = allReports.filter(report => 
+                    report.user_id === appState.currentUser.user_id
+                );
+
+                profileStats.textContent = `${userReports.length} reports submitted`;
+
+                if (userReports.length === 0) {
+                    myReports.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: #657786;">
+                            <div style="font-size: 48px; margin-bottom: 16px;">📋</div>
+                            <h3>No reports yet</h3>
+                            <p>Your submitted reports will appear here</p>
+                            <button class="btn btn-primary" onclick="showScreen('report')" style="margin-top: 16px;">
+                                Create Your First Report
+                            </button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                userReports.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+                myReports.innerHTML = '';
+                userReports.forEach(report => {
+                    // Parse JSON fields
+                    let authorities = [];
+                    let customTags = [];
+                    let media = null;
+                    
+                    try {
+                        if (report.authorities && report.authorities !== 'authorities') {
+                            authorities = JSON.parse(report.authorities);
+                        }
+                        if (report.custom_tags && report.custom_tags !== 'custom_tags') {
+                            customTags = JSON.parse(report.custom_tags);
+                        }
                         if (report.media_urls) {
                             media = { url: report.media_urls, type: report.media_types || 'image/*' };
                         }
-                        
-                        // Get username from Users table
-                        let username = 'Anonymous';
-                        if (report.user_id) {
-                            // Try to get from appState.users first
-                            if (appState.users) {
-                                const user = appState.users.find(u => u.user_id === report.user_id);
-                                if (user) {
-                                    username = user.username;
-                                }
-                            }
-                        }
-                        
-                        const postEl = createPostElement({
-                            ...report,
-                            username: username,
-                            authorities: authorities,
-                            custom_tags: customTags,
-                            media: media
-                        });
-                        container.appendChild(postEl);
+                    } catch (e) {
+                        console.log('Error parsing report data:', e);
+                    }
+                    
+                    const postEl = createPostElement({
+                        ...report,
+                        authorities: authorities,
+                        custom_tags: customTags,
+                        media: media
                     });
+                    myReports.appendChild(postEl);
+                });
 
-                } catch (error) {
-                    console.error('Failed to load feed:', error);
-                    if (!isRefresh) {
-                        container.innerHTML = `
-                            <div class="error-message">
-                                Failed to load feed. Please check your connection and try again.
-                            </div>
-                        `;
-                    }
-                }
-            }
-
-            function createPostElement(report) {
-                const post = document.createElement('div');
-                post.className = 'post';
-                post.id = `post-${report.report_id}`;
-                
-                const canDelete = appState.currentUser && 
-                    (appState.currentUser.user_id === report.user_id || 
-                     appState.currentUser.role === 'admin');
-                
-                const timeText = report.created_at ? formatTime(report.created_at) : 'Recently';
-                
-                // Get upvote count
-                const upvoteCount = report.upvotes || 0;
-                
-                post.innerHTML = `
-                    <div class="post-header">
-                        <div class="post-user">${report.username || 'Anonymous'}</div>
-                        <div>
-                            <span class="post-time">${timeText}</span>
-                            ${canDelete ? `<button class="delete-btn" onclick="deleteReport('${report.report_id}')">Delete</button>` : ''}
-                        </div>
-                    </div>
-                    
-                    ${report.media && report.media.url ? `
-                        <div class="post-media">
-                            ${report.media.type && report.media.type.startsWith('image/') ? 
-                                `<img src="${report.media.url}" alt="Report media" loading="lazy">` :
-                                `<video src="${report.media.url}" controls></video>`
-                            }
-                        </div>
-                    ` : ''}
-                    
-                    <div class="post-description">${report.description || 'No description'}</div>
-                    
-                    ${(report.authorities && report.authorities.length > 0) || (report.custom_tags && report.custom_tags.length > 0) ? `
-                        <div class="post-tags">
-                            ${report.authorities ? report.authorities.map(auth => `<span class="tag">${auth}</span>`).join('') : ''}
-                            ${report.custom_tags ? report.custom_tags.map(tag => `<span class="tag">${tag}</span>`).join('') : ''}
-                        </div>
-                    ` : ''}
-                    
-                    <div class="post-location">📍 ${report.location || 'Location not specified'}
-                    ${report.latitude && report.longitude ? `<br><small>Coordinates: ${report.latitude}, ${report.longitude}</small>` : ''}
-                    </div>
-                    
-                    <div class="post-actions">
-                        <div class="post-action" onclick="upvoteReport('${report.report_id}')">
-                            <span>👍</span>
-                            <span id="upvotes-${report.report_id}">${upvoteCount}</span>
-                        </div>
-                        <div class="post-action" onclick="showComments('${report.report_id}')">
-                            <span>💬</span>
-                            <span>Comment</span>
-                        </div>
-                        <div class="post-action" onclick="shareReport('${report.report_id}')">
-                            <span>↗️</span>
-                            <span>Share</span>
-                        </div>
+            } catch (error) {
+                console.error('Failed to load profile:', error);
+                myReports.innerHTML = `
+                    <div class="error-message">
+                        Failed to load your reports. Please check your connection.
                     </div>
                 `;
-                
-                return post;
+            }
+        }
+
+        function showEditProfileModal() {
+            const modal = document.getElementById('editProfileModal');
+            
+            // Fill form with current data
+            document.getElementById('editPhone').value = appState.userProfile?.phone_number || '';
+            document.getElementById('editLocation').value = appState.userProfile?.location || '';
+            
+            modal.classList.remove('hidden');
+        }
+
+        function hideEditProfileModal() {
+            document.getElementById('editProfileModal').classList.add('hidden');
+        }
+
+        async function updateProfile() {
+            const phone = document.getElementById('editPhone').value.trim();
+            const location = document.getElementById('editLocation').value.trim();
+
+            if (!appState.currentUser) {
+                showMessage('Please login to update profile', 'error');
+                return;
             }
 
-            async function deleteReport(reportId) {
-                if (!confirm('Are you sure you want to delete this report?')) return;
+            const result = await ApiService.request('update_user_profile', {
+                user_id: appState.currentUser.user_id,
+                phone_number: phone,
+                location: location
+            });
 
-                const result = await ApiService.request('delete_report', {
-                    report_id: reportId,
-                    user_id: appState.currentUser.user_id
-                });
-
-                if (result.success) {
-                    showMessage('Report deleted successfully', 'success');
-                    loadFeed();
-                } else {
-                    showMessage(result.error || 'Failed to delete report', 'error');
-                }
+            if (result.success) {
+                showMessage('Profile updated successfully!', 'success');
+                hideEditProfileModal();
+                loadUserProfile(); // Refresh profile data
+            } else {
+                showMessage(result.error || 'Failed to update profile', 'error');
             }
+        }
 
-            async function upvoteReport(reportId) {
-                if (!appState.currentUser) {
-                    showMessage('Please login to upvote', 'error');
-                    return;
-                }
+        // Utility Functions
+        function showMessage(message, type = 'info') {
+            // Remove any existing messages
+            const existingMessages = document.querySelectorAll('.message-alert');
+            existingMessages.forEach(msg => msg.remove());
 
-                const result = await ApiService.request('upvote_report', {
-                    report_id: reportId,
-                    user_id: appState.currentUser.user_id
-                });
+            const messageEl = document.createElement('div');
+            messageEl.className = `${type}-message`;
+            messageEl.textContent = message;
+            messageEl.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                z-index: 10000;
+                padding: 12px 24px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                animation: slideDown 0.3s ease;
+            `;
 
-                if (result.success) {
-                    // Update the upvote count immediately
-                    const upvoteElement = document.getElementById(`upvotes-${reportId}`);
-                    if (upvoteElement) {
-                        const currentCount = parseInt(upvoteElement.textContent) || 0;
-                        upvoteElement.textContent = currentCount + 1;
-                    }
-                    showMessage('Upvoted!', 'success');
-                } else {
-                    showMessage(result.error || 'Failed to upvote', 'error');
-                }
-            }
+            document.body.appendChild(messageEl);
 
-            // Comments Functions
-            async function showComments(reportId) {
-                appState.currentReportId = reportId;
-                
-                // Load comments
-                const comments = await ApiService.getCommentsForReport(reportId);
-                appState.comments[reportId] = comments;
-                
-                // Show modal
-                const modal = document.getElementById('commentsModal');
-                modal.classList.remove('hidden');
-                
-                // Render comments
-                renderComments(comments);
-                
-                // Focus on input
-                setTimeout(() => {
-                    document.getElementById('commentInput').focus();
-                }, 100);
-            }
-
-            function hideCommentsModal() {
-                document.getElementById('commentsModal').classList.add('hidden');
-                document.getElementById('commentInput').value = '';
-                appState.currentReportId = null;
-            }
-
-            function renderComments(comments) {
-                const container = document.getElementById('commentsContainer');
-                container.innerHTML = '';
-                
-                if (comments.length === 0) {
-                    container.innerHTML = `
-                        <div style="text-align: center; padding: 40px; color: #657786;">
-                            <div style="font-size: 48px; margin-bottom: 16px;">💬</div>
-                            <h3>No comments yet</h3>
-                            <p>Be the first to comment</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                // Sort comments by date
-                comments.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-                
-                // Group comments by parent
-                const commentMap = {};
-                const rootComments = [];
-                
-                comments.forEach(comment => {
-                    commentMap[comment.comment_id] = comment;
-                    if (!comment.parent_id) {
-                        rootComments.push(comment);
-                    }
-                });
-                
-                // Render comments
-                rootComments.forEach(comment => {
-                    container.appendChild(createCommentElement(comment, commentMap));
-                });
-            }
-
-            function createCommentElement(comment, commentMap) {
-                const commentEl = document.createElement('div');
-                commentEl.className = 'comment-item';
-                
-                // Get username
-                let username = 'Anonymous';
-                if (comment.user_id) {
-                    // Try to find user in current data
-                    if (appState.users) {
-                        const user = appState.users.find(u => u.user_id === comment.user_id);
-                        if (user) {
-                            username = user.username;
+            setTimeout(() => {
+                if (messageEl.parentNode) {
+                    messageEl.style.animation = 'slideUp 0.3s ease';
+                    setTimeout(() => {
+                        if (messageEl.parentNode) {
+                            messageEl.remove();
                         }
-                    }
+                    }, 300);
                 }
-                
-                const timeText = formatTime(comment.created_at);
-                
-                commentEl.innerHTML = `
-                    <div class="comment-header">
-                        <div class="comment-user">${username}</div>
-                        <div class="comment-time">${timeText}</div>
-                    </div>
-                    <div class="comment-content">${comment.content}</div>
-                    ${appState.currentUser ? `<button class="comment-reply" onclick="replyToComment('${comment.comment_id}')">Reply</button>` : ''}
-                `;
-                
-                return commentEl;
+            }, 5000);
+        }
+
+        function setLoading(loading, selector) {
+            const element = document.querySelector(selector);
+            if (!element) return;
+
+            if (loading) {
+                const originalText = element.textContent;
+                element.dataset.originalText = originalText;
+                element.innerHTML = '<div class="loading-spinner" style="display: inline-block; width: 20px; height: 20px; border-width: 2px;"></div>';
+                element.classList.add('loading');
+            } else {
+                const originalText = element.dataset.originalText;
+                if (originalText) {
+                    element.textContent = originalText;
+                    delete element.dataset.originalText;
+                }
+                element.classList.remove('loading');
             }
+        }
 
-            function replyToComment(commentId) {
-                const input = document.getElementById('commentInput');
-                input.value = `@${commentId} `;
-                input.focus();
-            }
-
-            async function submitComment() {
-                if (!appState.currentUser) {
-                    showMessage('Please login to comment', 'error');
-                    return;
-                }
-
-                const content = document.getElementById('commentInput').value.trim();
-                if (!content) {
-                    showMessage('Please enter a comment', 'error');
-                    return;
-                }
-
-                if (!appState.currentReportId) {
-                    showMessage('No report selected', 'error');
-                    return;
-                }
-
-                const commentData = {
-                    report_id: appState.currentReportId,
-                    user_id: appState.currentUser.user_id,
-                    content: content,
-                    parent_id: '' // For now, no threading
-                };
-
-                const result = await ApiService.request('add_comment', commentData);
-
-                if (result.success) {
-                    showMessage('Comment added successfully!', 'success');
-                    document.getElementById('commentInput').value = '';
-                    
-                    // Refresh comments
-                    const comments = await ApiService.getCommentsForReport(appState.currentReportId);
-                    appState.comments[appState.currentReportId] = comments;
-                    renderComments(comments);
-                } else {
-                    showMessage(result.error || 'Failed to add comment', 'error');
-                }
-            }
-
-            function shareReport(reportId) {
-                if (navigator.share) {
-                    navigator.share({
-                        title: 'iReporter NG Report',
-                        text: 'Check out this report on iReporter NG',
-                        url: window.location.href
-                    }).catch(err => console.log('Error sharing:', err));
-                } else {
-                    showMessage('Share feature not supported on this device', 'info');
-                }
-            }
-
-            function formatTime(timestamp) {
-                if (!timestamp) return 'Recently';
-                
-                const date = new Date(timestamp);
-                const now = new Date();
-                const diff = now - date;
-                
-                if (diff < 60000) return 'Just now';
-                if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
-                if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
-                if (diff < 604800000) return Math.floor(diff / 86400000) + 'd ago';
-                
-                return date.toLocaleDateString();
-            }
-
-            // Directory Functions
-            async function loadDirectory() {
-                const list = document.getElementById('directoryList');
-                if (!list) return;
-
-                list.innerHTML = '<div class="loading-spinner" style="margin: 40px auto;"></div>';
-
+        // Initialize app
+        async function initApp() {
+            console.log('Initializing iReporter NG...');
+            
+            // Check for saved session
+            const savedUser = localStorage.getItem('ireporter_user');
+            const savedToken = localStorage.getItem('ireporter_token');
+            
+            if (savedUser && savedToken) {
                 try {
-                    const authorities = appState.authorities.length > 0 
-                        ? appState.authorities 
-                        : await ApiService.getSheetData('Authorities');
+                    appState.currentUser = JSON.parse(savedUser);
+                    appState.authToken = savedToken;
                     
-                    appState.authorities = authorities;
-                    renderDirectoryList(authorities);
-                } catch (error) {
-                    console.error('Failed to load directory:', error);
-                    list.innerHTML = `
-                        <div class="error-message">
-                            Failed to load directory. Please check your connection.
-                        </div>
-                    `;
-                }
-            }
-
-            function renderDirectoryList(authorities) {
-                const list = document.getElementById('directoryList');
-                if (!list) return;
-
-                if (authorities.length === 0) {
-                    list.innerHTML = `
-                        <div class="no-results">
-                            <div style="font-size: 48px; margin-bottom: 16px;">🔍</div>
-                            <h3>No authorities found</h3>
-                            <p>Try a different search term or add a new authority</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                list.innerHTML = '';
-                authorities.forEach(authority => {
-                    const item = document.createElement('div');
-                    item.className = `directory-item ${authority.is_custom || authority.created_by === appState.currentUser?.user_id ? 'custom' : ''}`;
-                    item.onclick = () => selectAuthorityFromDirectory(authority);
+                    // Validate token
+                    const result = await ApiService.request('validate_session');
                     
-                    item.innerHTML = `
-                        <div class="directory-name">${authority.name || 'Unknown Authority'}</div>
-                        <div class="directory-handle">${authority.handle || 'No handle'}</div>
-                        ${authority.description ? `<div style="font-size: 12px; color: #657786; margin-top: 4px;">${authority.description}</div>` : ''}
-                        ${authority.is_custom || authority.created_by ? `
-                            <div class="directory-actions">
-                                <button onclick="event.stopPropagation(); editAuthority('${authority.authority_id}')" title="Edit">✏️</button>
-                                <button onclick="event.stopPropagation(); deleteAuthority('${authority.authority_id}')" class="delete-authority-btn" title="Delete">🗑️</button>
-                            </div>
-                        ` : ''}
-                    `;
-                    
-                    list.appendChild(item);
-                });
-            }
-
-            function selectAuthorityFromDirectory(authority) {
-                // Navigate to report screen and add authority
-                showScreen('report');
-                
-                if (!appState.selectedAuthorities.some(a => a.authority_id === authority.authority_id)) {
-                    appState.selectedAuthorities.push(authority);
-                    renderSelectedAuthorities();
-                }
-                
-                showMessage(`Added "${authority.name}" to selected authorities`, 'success');
-            }
-
-            function filterDirectory() {
-                const searchTerm = document.getElementById('directorySearch').value.toLowerCase().trim();
-                const authorities = appState.authorities;
-                
-                if (!searchTerm) {
-                    renderDirectoryList(authorities);
-                    return;
-                }
-                
-                const filtered = authorities.filter(authority => 
-                    (authority.name && authority.name.toLowerCase().includes(searchTerm)) ||
-                    (authority.handle && authority.handle.toLowerCase().includes(searchTerm)) ||
-                    (authority.description && authority.description.toLowerCase().includes(searchTerm))
-                );
-                
-                renderDirectoryList(filtered);
-            }
-
-            function showAddAuthorityModal() {
-                appState.editingAuthority = null;
-                document.getElementById('modalTitle').textContent = 'Add New Authority';
-                document.getElementById('modalSubmitBtn').textContent = 'Add Authority';
-                document.getElementById('modalSubmitBtn').onclick = addNewAuthority;
-                
-                document.getElementById('authorityName').value = '';
-                document.getElementById('authorityHandle').value = '';
-                document.getElementById('authorityDescription').value = '';
-                
-                document.getElementById('addAuthorityModal').classList.remove('hidden');
-                document.getElementById('authorityName').focus();
-            }
-
-            function hideAddAuthorityModal() {
-                document.getElementById('addAuthorityModal').classList.add('hidden');
-            }
-
-            async function addNewAuthority() {
-                const name = document.getElementById('authorityName').value.trim();
-                const handle = document.getElementById('authorityHandle').value.trim();
-                const description = document.getElementById('authorityDescription').value.trim();
-
-                if (!name || !handle) {
-                    showMessage('Please enter both name and handle', 'error');
-                    return;
-                }
-
-                if (!handle.startsWith('@')) {
-                    showMessage('Handle must start with @', 'error');
-                    return;
-                }
-
-                const authorityData = {
-                    name: name,
-                    handle: handle,
-                    description: description,
-                    created_by: appState.currentUser.user_id
-                };
-
-                const result = await ApiService.request('add_authority', authorityData);
-
-                if (result.success) {
-                    showMessage('Authority added successfully!', 'success');
-                    hideAddAuthorityModal();
-                    appState.authorities = [];
-                    loadDirectory();
-                } else {
-                    showMessage(result.error || 'Failed to add authority', 'error');
-                }
-            }
-
-            function editAuthority(authorityId) {
-                const authority = appState.authorities.find(a => a.authority_id === authorityId);
-                if (!authority) return;
-
-                appState.editingAuthority = authority;
-                document.getElementById('modalTitle').textContent = 'Edit Authority';
-                document.getElementById('modalSubmitBtn').textContent = 'Update Authority';
-                document.getElementById('modalSubmitBtn').onclick = updateAuthority;
-                
-                document.getElementById('authorityName').value = authority.name || '';
-                document.getElementById('authorityHandle').value = authority.handle || '';
-                document.getElementById('authorityDescription').value = authority.description || '';
-                
-                document.getElementById('addAuthorityModal').classList.remove('hidden');
-            }
-
-            async function updateAuthority() {
-                if (!appState.editingAuthority) return;
-
-                const name = document.getElementById('authorityName').value.trim();
-                const handle = document.getElementById('authorityHandle').value.trim();
-                const description = document.getElementById('authorityDescription').value.trim();
-
-                if (!name || !handle) {
-                    showMessage('Please enter both name and handle', 'error');
-                    return;
-                }
-
-                const result = await ApiService.request('update_authority', {
-                    authority_id: appState.editingAuthority.authority_id,
-                    name: name,
-                    handle: handle,
-                    description: description
-                });
-
-                if (result.success) {
-                    showMessage('Authority updated successfully!', 'success');
-                    hideAddAuthorityModal();
-                    appState.authorities = [];
-                    loadDirectory();
-                } else {
-                    showMessage(result.error || 'Failed to update authority', 'error');
-                }
-            }
-
-            async function deleteAuthority(authorityId) {
-                if (!confirm('Are you sure you want to delete this authority?')) return;
-
-                const result = await ApiService.request('delete_authority', { authority_id: authorityId });
-
-                if (result.success) {
-                    showMessage('Authority deleted successfully', 'success');
-                    appState.authorities = [];
-                    loadDirectory();
-                } else {
-                    showMessage(result.error || 'Failed to delete authority', 'error');
-                }
-            }
-
-            // Profile Functions
-            async function loadProfile() {
-                if (!appState.currentUser) {
-                    showScreen('home');
-                    return;
-                }
-
-                const profileName = document.getElementById('profileName');
-                const profileStats = document.getElementById('profileStats');
-                const myReports = document.getElementById('myReports');
-                const profileAvatar = document.getElementById('profileAvatar');
-
-                profileName.textContent = appState.currentUser.username || appState.currentUser.email;
-                profileAvatar.textContent = (appState.currentUser.username || appState.currentUser.email).charAt(0).toUpperCase();
-                myReports.innerHTML = '<div class="loading-spinner" style="margin: 40px auto;"></div>';
-
-                try {
-                    const allReports = await ApiService.getSheetData('Reports');
-                    const userReports = allReports.filter(report => 
-                        report.user_id === appState.currentUser.user_id
-                    );
-
-                    profileStats.textContent = `${userReports.length} reports submitted`;
-
-                    if (userReports.length === 0) {
-                        myReports.innerHTML = `
-                            <div style="text-align: center; padding: 40px; color: #657786;">
-                                <div style="font-size: 48px; margin-bottom: 16px;">📋</div>
-                                <h3>No reports yet</h3>
-                                <p>Your submitted reports will appear here</p>
-                                <button class="btn btn-primary" onclick="showScreen('report')" style="margin-top: 16px;">
-                                    Create Your First Report
-                                </button>
-                            </div>
-                        `;
-                        return;
-                    }
-
-                    userReports.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-                    myReports.innerHTML = '';
-                    userReports.forEach(report => {
-                        // Parse JSON fields
-                        let authorities = [];
-                        let customTags = [];
-                        let media = null;
-                        
-                        try {
-                            if (report.authorities && report.authorities !== 'authorities') {
-                                authorities = JSON.parse(report.authorities);
-                            }
-                            if (report.custom_tags && report.custom_tags !== 'custom_tags') {
-                                customTags = JSON.parse(report.custom_tags);
-                            }
-                            if (report.media_urls) {
-                                media = { url: report.media_urls, type: report.media_types || 'image/*' };
-                            }
-                        } catch (e) {
-                            console.log('Error parsing report data:', e);
-                        }
-                        
-                        const postEl = createPostElement({
-                            ...report,
-                            authorities: authorities,
-                            custom_tags: customTags,
-                            media: media
-                        });
-                        myReports.appendChild(postEl);
-                    });
-
-                } catch (error) {
-                    console.error('Failed to load profile:', error);
-                    myReports.innerHTML = `
-                        <div class="error-message">
-                            Failed to load your reports. Please check your connection.
-                        </div>
-                    `;
-                }
-            }
-
-            // Utility Functions
-            function showMessage(message, type = 'info') {
-                // Remove any existing messages
-                const existingMessages = document.querySelectorAll('.message-alert');
-                existingMessages.forEach(msg => msg.remove());
-
-                const messageEl = document.createElement('div');
-                messageEl.className = `${type}-message`;
-                messageEl.textContent = message;
-                messageEl.style.cssText = `
-                    position: fixed;
-                    top: 20px;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    z-index: 10000;
-                    padding: 12px 24px;
-                    border-radius: 8px;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                    animation: slideDown 0.3s ease;
-                `;
-
-                document.body.appendChild(messageEl);
-
-                setTimeout(() => {
-                    if (messageEl.parentNode) {
-                        messageEl.style.animation = 'slideUp 0.3s ease';
-                        setTimeout(() => {
-                            if (messageEl.parentNode) {
-                                messageEl.remove();
-                            }
-                        }, 300);
-                    }
-                }, 5000);
-            }
-
-            function setLoading(loading, selector) {
-                const element = document.querySelector(selector);
-                if (!element) return;
-
-                if (loading) {
-                    const originalText = element.textContent;
-                    element.dataset.originalText = originalText;
-                    element.innerHTML = '<div class="loading-spinner" style="display: inline-block; width: 20px; height: 20px; border-width: 2px;"></div>';
-                    element.classList.add('loading');
-                } else {
-                    const originalText = element.dataset.originalText;
-                    if (originalText) {
-                        element.textContent = originalText;
-                        delete element.dataset.originalText;
-                    }
-                    element.classList.remove('loading');
-                }
-            }
-
-            // Initialize app
-            async function initApp() {
-                console.log('Initializing iReporter NG...');
-                
-                // Check for saved session
-                const savedUser = localStorage.getItem('ireporter_user');
-                const savedToken = localStorage.getItem('ireporter_token');
-                
-                if (savedUser && savedToken) {
-                    try {
-                        appState.currentUser = JSON.parse(savedUser);
-                        appState.authToken = savedToken;
-                        
-                        // Validate token
-                        const result = await ApiService.request('validate_session');
-                        
-                        if (result.success) {
-                            showMainApp();
-                        } else {
-                            localStorage.removeItem('ireporter_user');
-                            localStorage.removeItem('ireporter_token');
-                            showAuthScreen();
-                        }
-                    } catch (error) {
-                        console.error('Session restoration error:', error);
+                    if (result.success) {
+                        showMainApp();
+                    } else {
                         localStorage.removeItem('ireporter_user');
                         localStorage.removeItem('ireporter_token');
                         showAuthScreen();
                     }
-                } else {
+                } catch (error) {
+                    console.error('Session restoration error:', error);
+                    localStorage.removeItem('ireporter_user');
+                    localStorage.removeItem('ireporter_token');
                     showAuthScreen();
                 }
-                
-                // Preload authorities in background
-                loadAuthorities().catch(console.error);
-                
-                // Load users for comments
-                ApiService.getSheetData('Users').then(users => {
-                    appState.users = users;
-                }).catch(console.error);
+            } else {
+                showAuthScreen();
             }
+            
+            // Preload authorities in background
+            loadAuthorities().catch(console.error);
+            
+            // Load users for comments
+            ApiService.getSheetData('Users').then(users => {
+                appState.users = users;
+            }).catch(console.error);
+        }
 
-            // Initialize on load
-            document.addEventListener('DOMContentLoaded', initApp);
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', initApp);
 
-            // Add CSS for animations
-            const style = document.createElement('style');
-            style.textContent = `
-                @keyframes slideDown {
-                    from {
-                        opacity: 0;
-                        transform: translate(-50%, -20px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translate(-50%, 0);
-                    }
+        // Add CSS for animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideDown {
+                from {
+                    opacity: 0;
+                    transform: translate(-50%, -20px);
                 }
-                
-                @keyframes slideUp {
-                    from {
-                        opacity: 1;
-                        transform: translate(-50%, 0);
-                    }
-                    to {
-                        opacity: 0;
-                        transform: translate(-50%, -20px);
-                    }
+                to {
+                    opacity: 1;
+                    transform: translate(-50%, 0);
                 }
-            `;
-            document.head.appendChild(style);
-        </script>
-    </body>
+            }
+            
+            @keyframes slideUp {
+                from {
+                    opacity: 1;
+                    transform: translate(-50%, 0);
+                }
+                to {
+                    opacity: 0;
+                    transform: translate(-50%, -20px);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
 </html>
